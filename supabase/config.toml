@@ -1,0 +1,92 @@
+# Supabase local development configuration.
+# Full reference: https://supabase.com/docs/guides/cli/config
+
+# Replace "your-project-ref" with your actual project reference ID.
+# Find it in: Supabase Dashboard > Project Settings > General > Reference ID
+project_id = "your-project-ref"
+
+[api]
+enabled = true
+# Port to use for the local API (PostgREST).
+port = 54321
+# Schemas to expose in the API. Must include "public".
+schemas = ["public", "graphql_public"]
+# Extra schemas to add to the search path for every request.
+extra_search_path = ["public", "extensions"]
+# Maximum number of rows to return from a query.
+max_rows = 1000
+
+[db]
+# Port to use for the local database.
+port = 54322
+# Port used by the database shadow instance (used for diffing migrations).
+shadow_port = 54320
+# The major version of Postgres to use.
+major_version = 15
+
+[studio]
+enabled = true
+# Port to use for Supabase Studio.
+port = 54323
+
+[inbucket]
+enabled = true
+# Port to use for the local email testing server (Inbucket).
+port = 54324
+
+[storage]
+enabled = true
+# Maximum allowed file size for uploads.
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+# The base URL of your site. Used for redirect URLs in auth flows.
+site_url = "http://localhost:3000"
+# Additional redirect URLs to allow after sign-in or sign-up.
+additional_redirect_urls = ["https://localhost:3000"]
+# How long (in seconds) a JWT remains valid before expiry.
+jwt_expiry = 3600
+# Allow refresh tokens to be reused across sessions.
+enable_refresh_token_rotation = true
+# Seconds before a used refresh token may be reused (helps with concurrent requests).
+refresh_token_reuse_interval = 10
+# Allow new users to create accounts.
+enable_signup = true
+
+[auth.email]
+# Allow new users to sign up via email.
+enable_signup = true
+# Disable email confirmations — appropriate for internal tools where users are trusted
+# and friction should be minimised. Set to true if you need verified emails.
+enable_confirmations = false
+
+# ---------------------------------------------------------------------------
+# OAuth provider configuration (uncomment and populate as needed)
+# Add client_id and secret from the respective provider's developer console.
+# ---------------------------------------------------------------------------
+
+# [auth.external.github]
+# enabled = true
+# client_id = "env(SUPABASE_AUTH_GITHUB_CLIENT_ID)"
+# secret = "env(SUPABASE_AUTH_GITHUB_SECRET)"
+# redirect_uri = ""  # Leave blank to use Supabase's default callback URL.
+
+# [auth.external.google]
+# enabled = true
+# client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+# secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+# redirect_uri = ""
+
+# [auth.external.azure]
+# enabled = true
+# client_id = "env(SUPABASE_AUTH_AZURE_CLIENT_ID)"
+# secret = "env(SUPABASE_AUTH_AZURE_SECRET)"
+# url = ""  # Azure tenant URL, e.g. https://login.microsoftonline.com/<tenant-id>
+# redirect_uri = ""
+
+[edge_runtime]
+enabled = true
+
+[analytics]
+enabled = false

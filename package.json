@@ -1,0 +1,14 @@
+{
+  "name": "your-project",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Rename this package before publishing. Template for an Azure Static Web App with Supabase backend.",
+  "scripts": {
+    "dev": "echo 'Replace this script with your local dev server command (e.g. vite)' && exit 1",
+    "build": "cp -r src dist"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}
