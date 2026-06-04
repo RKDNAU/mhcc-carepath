@@ -1,12 +1,10 @@
 import { useRef, useState } from 'react'
 import { Download, Upload, CheckCircle, AlertCircle, X, FileText } from 'lucide-react'
 import { useData } from '../context/DataContext'
+import { apiGetText } from '../api/client'
 import {
   downloadCsv, detectCsvType,
   CSV_TYPES, CSV_FILENAMES, CSV_LABELS,
-  intakeQueueToCsv,   csvToIntakeQueue,
-  intakeVolumeToCsv,  csvToIntakeVolume,
-  memberSharedDataToCsv, csvToMemberSharedData,
 } from '../utils/csvUtils'
 
 const DOWNLOAD_ORDER = [
@@ -22,7 +20,7 @@ const DATA_DESCRIPTIONS = {
 }
 
 export default function ProviderSettings() {
-  const { intakeQueue, setIntakeQueue, intakeVolume, setIntakeVolume, setMemberSharedData } = useData()
+  const { refresh } = useData()
   const fileInputRef = useRef(null)
   const [uploadState, setUploadState] = useState(null)
   // uploadState shape:
@@ -33,12 +31,13 @@ export default function ProviderSettings() {
 
   // ── Downloads ─────────────────────────────────────────────────────────────
 
-  function handleDownload(type) {
-    let content
-    if (type === CSV_TYPES.INTAKE_QUEUE)  content = intakeQueueToCsv(intakeQueue)
-    if (type === CSV_TYPES.INTAKE_VOLUME) content = intakeVolumeToCsv(intakeVolume)
-    if (type === CSV_TYPES.MEMBER_SHARED) content = memberSharedDataToCsv()
-    if (content !== undefined) downloadCsv(content, CSV_FILENAMES[type])
+  async function handleDownload(type) {
+    try {
+      const content = await apiGetText(`/admin/export-csv?type=${type}`)
+      downloadCsv(content, CSV_FILENAMES[type])
+    } catch (err) {
+      console.error('Export failed:', err)
+    }
   }
 
   // ── File selection ────────────────────────────────────────────────────────
@@ -71,16 +70,20 @@ export default function ProviderSettings() {
 
   // ── Confirm import ────────────────────────────────────────────────────────
 
-  function handleConfirmUpload() {
+  async function handleConfirmUpload() {
     if (uploadState?.status !== 'preview') return
     const { type, text, filename } = uploadState
     try {
-      if (type === CSV_TYPES.INTAKE_QUEUE)  setIntakeQueue(csvToIntakeQueue(text))
-      if (type === CSV_TYPES.INTAKE_VOLUME) setIntakeVolume(csvToIntakeVolume(text))
-      if (type === CSV_TYPES.MEMBER_SHARED) setMemberSharedData(csvToMemberSharedData(text))
+      const res = await fetch(`/api/admin/import-csv?type=${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: text }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      refresh()
       setUploadState({ status: 'success', type, filename })
     } catch (err) {
-      setUploadState({ status: 'error', message: `Parse error: ${err.message}` })
+      setUploadState({ status: 'error', message: `Import error: ${err.message}` })
     }
   }
 

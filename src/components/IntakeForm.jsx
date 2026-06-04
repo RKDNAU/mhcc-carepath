@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, ChevronRight, ChevronLeft, CheckCircle, Heart, AlertTriangle, ExternalLink } from 'lucide-react'
 import carePath from '/img/CarePath.png'
+import { apiPost } from '../api/client'
 
 const SEEKER_GROUPS = [
   'Adult',
@@ -524,8 +525,12 @@ export default function IntakeForm({ onClose, onPrivacy }) {
   }
 
   const handleNext = () => {
-    if (step < TOTAL_STEPS) setStep(s => s + 1)
-    else setStep('success')
+    if (step < TOTAL_STEPS) {
+      setStep(s => s + 1)
+    } else {
+      apiPost('/intakes', formData).catch(err => console.error('Intake submit failed:', err))
+      setStep('success')
+    }
   }
 
   return (

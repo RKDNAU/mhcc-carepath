@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { PROGRAMS } from '../data/programs'
-import { mockProgramData, AGE_GROUPS } from '../utils/programData'
+import { AGE_GROUPS } from '../utils/programData'
 import { useData } from '../context/DataContext'
 
 const GENDERS  = ['All', 'Female', 'Male', 'Non-binary']
@@ -15,6 +15,32 @@ const G_OFFSET = { All: 0, Female: 100, Male: 200, 'Non-binary': 300 }
 const rng = (seed, offset) => {
   const x = Math.sin(seed * 9301 + offset * 49297 + 233) * 10000
   return x - Math.floor(x)
+}
+
+function aggregateAllGender(map, programId) {
+  const rows = ['Female', 'Male', 'Non-binary'].map(g => map[`${programId}_${g}`]).filter(Boolean)
+  if (!rows.length) return null
+  if (rows.length === 1) return rows[0]
+  const n = rows.length
+  const totalCapacity   = rows[0].totalCapacity
+  const currentClients  = rows.reduce((s, r) => s + r.currentClients, 0)
+  const availablePct    = Math.max(0, Math.round(((totalCapacity - currentClients) / totalCapacity) * 100))
+  return {
+    avgWaitDays:      parseFloat((rows.reduce((s, r) => s + r.avgWaitDays, 0) / n).toFixed(1)),
+    completionRate:   Math.round(rows.reduce((s, r) => s + r.completionRate, 0) / n),
+    totalClients:     rows.reduce((s, r) => s + r.totalClients, 0),
+    totalCapacity, currentClients, availablePct,
+    waitlistDepth:    rows.reduce((s, r) => s + r.waitlistDepth, 0),
+    hasCapacity:      rows.some(r => r.hasCapacity),
+    outcomesByAge:    rows[0].outcomesByAge.map((ag, i) => ({
+      label: ag.label,
+      value: Math.round(rows.reduce((s, r) => s + r.outcomesByAge[i].value, 0) / n),
+    })),
+    demographicSplit: rows[0].demographicSplit.map((ag, i) => ({
+      label: ag.label,
+      value: rows.reduce((s, r) => s + r.demographicSplit[i].value, 0),
+    })),
+  }
 }
 
 function ageMetrics(base, program, ageLabel, gender) {
@@ -182,20 +208,19 @@ export default function SharedData() {
 
   const selectedProg = PROGRAMS.find(p => p.id === selectedId) || PROGRAMS[0]
 
-  // Use uploaded member shared data if available for the current program+gender,
-  // otherwise fall back to seeded generated data.
   const base = useMemo(() => {
-    const key = `${selectedId}_${selectedGender}`
-    return (memberSharedData && memberSharedData[key])
-      ? memberSharedData[key]
-      : mockProgramData(selectedProg, selectedGender)
-  }, [selectedProg, selectedId, selectedGender, memberSharedData])
+    if (!memberSharedData) return null
+    return selectedGender === 'All'
+      ? aggregateAllGender(memberSharedData, selectedId)
+      : (memberSharedData[`${selectedId}_${selectedGender}`] || null)
+  }, [selectedId, selectedGender, memberSharedData])
 
-  const displayMetrics = useMemo(() => ageMetrics(base, selectedProg, selectedAge, selectedGender), [base, selectedProg, selectedAge, selectedGender])
+  const displayMetrics = useMemo(() => base ? ageMetrics(base, selectedProg, selectedAge, selectedGender) : null, [base, selectedProg, selectedAge, selectedGender])
   const supportData    = useMemo(() => getSupportForPeriod(supportPeriod), [supportPeriod])
   const unmetGrid      = useMemo(() => buildUnmetGrid(), [])
 
-  const waitColor = displayMetrics.avgWaitDays <= 3 ? 'text-emerald-700'
+  const waitColor = !displayMetrics           ? 'text-slate-400'
+                  : displayMetrics.avgWaitDays <= 3 ? 'text-emerald-700'
                   : displayMetrics.avgWaitDays <= 7 ? 'text-amber-700'
                   : 'text-red-700'
 
@@ -325,6 +350,9 @@ export default function SharedData() {
       {/* ── Section 3: Member Shared Data ─────────────────────────── */}
       <div>
         <SectionLabel color="slate">Member shared data</SectionLabel>
+        {!base ? (
+          <p className="text-sm text-slate-400 py-4">No program data available — run <code>npm run seed</code> to populate.</p>
+        ) : <>
 
         {/* Filters */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-5 space-y-3">
@@ -526,6 +554,7 @@ export default function SharedData() {
 
           </div>
         </div>
+        </>}
       </div>
 
     </div>

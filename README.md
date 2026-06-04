@@ -1,4 +1,28 @@
-# SWA with Supabase — Project Template
+# MHCC CarePath
+
+## Local development (SQLite mode)
+
+This project runs locally against a SQLite database via a small Express API server. No Supabase or Azure connection is needed.
+
+```bash
+npm install
+
+# First run only — seeds the DB with sample intakes, volume weeks, and program metrics
+npm run seed
+
+# Start API server (port 3001) + Vite dev server (port 5173) together
+npm run dev:all
+```
+
+Or just double-click `start.bat` from the project root.
+
+The database file lives at `server/data/mhcc.db` and is gitignored. Re-run `npm run seed` at any time if you want to reset to the sample data (it skips tables that already have rows, so clear the DB file first for a full reset).
+
+> **Azure deployment note:** The current setup requires a Node.js server (Express + SQLite) which Azure Static Web Apps cannot host. Azure App Service or Azure Functions would be needed for a cloud deployment. See Stage 7 in the migration plan.
+
+---
+
+# SWA with Supabase — Project Template (original)
 
 ## What this template gives you
 
