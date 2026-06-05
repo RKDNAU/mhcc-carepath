@@ -22,6 +22,7 @@ jobs:
         run: |
           npm ci
           npm run build
+          npm prune --production
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
