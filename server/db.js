@@ -2,11 +2,11 @@ const Database = require('better-sqlite3')
 const path = require('path')
 const fs = require('fs')
 
-const DATA_DIR = path.join(__dirname, 'data')
-const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'mhcc.db')
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'mhcc.db')
 const MIGRATION_PATH = path.join(__dirname, 'migrations', '001_init.sql')
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
+const DB_DIR = path.dirname(DB_PATH)
+if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true })
 
 const db = new Database(DB_PATH)
 
