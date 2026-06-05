@@ -8,6 +8,8 @@ export const PROGRAMS = [
     functions: ['Advocacy & rights', 'Lived experience leadership'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Other',
+    avgWaitDays: 21,
+    capacity: 0,
   },
   {
     id: 'PRG0084',
@@ -19,6 +21,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation', 'Early recognition', 'Initiation / reach-in'],
     targetGroups: ['Adults', 'Young people', 'Aboriginal and Torres Strait Islander peoples', 'Culturally and Linguistically Diverse communities', 'LGBTQIA+', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 14,
+    capacity: 0,
   },
   {
     id: 'PRG0087',
@@ -30,6 +34,8 @@ export const PROGRAMS = [
     functions: ['Initiation / reach-in', 'Holding / continuity'],
     targetGroups: ['Adults', 'Young people', 'Other'],
     accessMode: 'Self-referral',
+    avgWaitDays: 3,
+    capacity: 5,
   },
   {
     id: 'PRG0088',
@@ -41,6 +47,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'Young people', 'People with psychosocial disability'],
     accessMode: 'Self-referral',
+    avgWaitDays: 4,
+    capacity: 2,
   },
   {
     id: 'PRG0089',
@@ -52,6 +60,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'Young people', 'People with psychosocial disability', 'Other'],
     accessMode: 'Self-referral',
+    avgWaitDays: 4,
+    capacity: 3,
   },
   {
     id: 'PRG0150',
@@ -62,6 +72,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation', 'Advocacy & rights'],
     targetGroups: ['Carers'],
     accessMode: 'Phone/online',
+    avgWaitDays: 2,
+    capacity: 20,
   },
   {
     id: 'PRG0170',
@@ -72,6 +84,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Adults', 'Families', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 10,
   },
   {
     id: 'PRG0186',
@@ -82,6 +96,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'Young people'],
     accessMode: 'Appointment',
+    avgWaitDays: 4,
+    capacity: 8,
   },
   {
     id: 'PRG0190',
@@ -92,6 +108,8 @@ export const PROGRAMS = [
     functions: ['Lived experience leadership', 'Early recognition'],
     targetGroups: ['Adults', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 8,
   },
   {
     id: 'PRG0191',
@@ -102,6 +120,8 @@ export const PROGRAMS = [
     functions: ['Early recognition', 'Crisis response / stabilisation'],
     targetGroups: ['Adults', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 12,
   },
   {
     id: 'PRG0197',
@@ -112,6 +132,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation'],
     targetGroups: ['Other'],
     accessMode: 'Appointment',
+    avgWaitDays: 3,
+    capacity: 6,
   },
   {
     id: 'PRG0220',
@@ -122,6 +144,8 @@ export const PROGRAMS = [
     functions: ['Early recognition', 'Holding / continuity'],
     targetGroups: ['Adults', 'Young people'],
     accessMode: 'Self-referral',
+    avgWaitDays: 3,
+    capacity: 4,
   },
   {
     id: 'PRG0222',
@@ -132,6 +156,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Families', 'Carers'],
     accessMode: 'Phone/online',
+    avgWaitDays: 4,
+    capacity: 6,
   },
   {
     id: 'PRG0223',
@@ -142,6 +168,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Young people', 'Families', 'Carers'],
     accessMode: 'Appointment',
+    avgWaitDays: 5,
+    capacity: 4,
   },
   {
     id: 'PRG0224',
@@ -152,6 +180,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'Young people'],
     accessMode: 'Other',
+    avgWaitDays: 10,
+    capacity: 0,
   },
   {
     id: 'PRG0232',
@@ -162,6 +192,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Young people'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 5,
   },
   {
     id: 'PRG0234',
@@ -172,6 +204,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 7,
+    capacity: 3,
   },
   {
     id: 'PRG0242',
@@ -182,6 +216,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Adults', 'Families', 'Carers', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 4,
+    capacity: 15,
   },
   {
     id: 'PRG0244',
@@ -192,6 +228,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Adults', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 8,
   },
   {
     id: 'PRG0247',
@@ -202,6 +240,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation', 'Holding / continuity'],
     targetGroups: ['Adults', 'Families', 'Carers', 'LGBTQIA+', 'Other'],
     accessMode: 'Appointment',
+    avgWaitDays: 3,
+    capacity: 3,
   },
   {
     id: 'PRG0254',
@@ -212,6 +252,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity', 'Lived experience leadership'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 7,
+    capacity: 2,
   },
   {
     id: 'PRG0258',
@@ -222,6 +264,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'Families'],
     accessMode: 'Appointment',
+    avgWaitDays: 5,
+    capacity: 4,
   },
   {
     id: 'PRG0261',
@@ -232,6 +276,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 10,
   },
   {
     id: 'PRG0270',
@@ -242,6 +288,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 7,
+    capacity: 3,
   },
   {
     id: 'PRG0284',
@@ -252,6 +300,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation', 'Holding / continuity'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 5,
+    capacity: 4,
   },
   {
     id: 'PRG0285',
@@ -262,6 +312,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 6,
+    capacity: 3,
   },
   {
     id: 'PRG0286',
@@ -272,6 +324,8 @@ export const PROGRAMS = [
     functions: ['Lived experience leadership', 'Belonging & participation'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 4,
+    capacity: 5,
   },
   {
     id: 'PRG0291',
@@ -282,6 +336,8 @@ export const PROGRAMS = [
     functions: ['Belonging & participation', 'Early recognition'],
     targetGroups: ['Culturally and Linguistically Diverse communities'],
     accessMode: 'Other',
+    avgWaitDays: 2,
+    capacity: 30,
   },
   {
     id: 'PRG0293',
@@ -292,6 +348,8 @@ export const PROGRAMS = [
     functions: ['Early recognition', 'Belonging & participation'],
     targetGroups: ['Young people', 'Families', 'Culturally and Linguistically Diverse communities'],
     accessMode: 'Other',
+    avgWaitDays: 3,
+    capacity: 20,
   },
   {
     id: 'PRG0294',
@@ -302,6 +360,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Culturally and Linguistically Diverse communities'],
     accessMode: 'Other',
+    avgWaitDays: 2,
+    capacity: 25,
   },
   {
     id: 'PRG0295',
@@ -312,6 +372,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Culturally and Linguistically Diverse communities'],
     accessMode: 'Other',
+    avgWaitDays: 2,
+    capacity: 15,
   },
   {
     id: 'PRG0296',
@@ -322,6 +384,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation'],
     targetGroups: ['Young people', 'Families', 'Culturally and Linguistically Diverse communities'],
     accessMode: 'Phone/online',
+    avgWaitDays: 2,
+    capacity: 50,
   },
   {
     id: 'PRG0302',
@@ -332,6 +396,8 @@ export const PROGRAMS = [
     functions: ['Crisis response / stabilisation', 'Holding / continuity', 'Coordination / navigation'],
     targetGroups: ['Adults'],
     accessMode: 'Referral required',
+    avgWaitDays: 2,
+    capacity: 2,
   },
   {
     id: 'PRG0306',
@@ -342,6 +408,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults', 'Young people'],
     accessMode: 'Appointment',
+    avgWaitDays: 3,
+    capacity: 12,
   },
   {
     id: 'PRG0309',
@@ -352,6 +420,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity', 'Coordination / navigation'],
     targetGroups: ['Adults', 'Young people', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 4,
+    capacity: 10,
   },
   {
     id: 'PRG0310',
@@ -362,6 +432,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation'],
     targetGroups: ['Adults', 'Young people', 'Other'],
     accessMode: 'Phone/online',
+    avgWaitDays: 2,
+    capacity: 30,
   },
   {
     id: 'PRG0323',
@@ -372,6 +444,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Adults'],
     accessMode: 'Appointment',
+    avgWaitDays: 4,
+    capacity: 5,
   },
   {
     id: 'PRG0324',
@@ -382,6 +456,8 @@ export const PROGRAMS = [
     functions: ['Belonging & participation', 'Early recognition'],
     targetGroups: ['Adults', 'Families'],
     accessMode: 'Appointment',
+    avgWaitDays: 4,
+    capacity: 3,
   },
   {
     id: 'PRG0352',
@@ -392,6 +468,8 @@ export const PROGRAMS = [
     functions: ['Early recognition', 'Coordination / navigation'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 14,
+    capacity: 0,
   },
   {
     id: 'PRG0362',
@@ -402,6 +480,8 @@ export const PROGRAMS = [
     functions: ['Initiation / reach-in', 'Holding / continuity', 'Coordination / navigation'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 5,
+    capacity: 3,
   },
   {
     id: 'PRG0363',
@@ -412,6 +492,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity', 'Belonging & participation', 'Coordination / navigation'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 7,
+    capacity: 2,
   },
   {
     id: 'PRG0364',
@@ -422,6 +504,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation', 'Advocacy & rights'],
     targetGroups: ['Adults', 'People with psychosocial disability'],
     accessMode: 'Referral required',
+    avgWaitDays: 4,
+    capacity: 4,
   },
   {
     id: 'PRG0370',
@@ -432,6 +516,8 @@ export const PROGRAMS = [
     functions: ['Crisis response / stabilisation', 'Holding / continuity'],
     targetGroups: ['Adults'],
     accessMode: 'Referral required',
+    avgWaitDays: 2,
+    capacity: 6,
   },
   {
     id: 'PRG0388',
@@ -442,6 +528,8 @@ export const PROGRAMS = [
     functions: ['Early recognition', 'Coordination / navigation'],
     targetGroups: ['Culturally and Linguistically Diverse communities'],
     accessMode: 'Phone/online',
+    avgWaitDays: 2,
+    capacity: 15,
   },
   {
     id: 'PRG0410',
@@ -452,6 +540,8 @@ export const PROGRAMS = [
     functions: ['Advocacy & rights', 'Court, custody & community transitions', 'Coordination / navigation'],
     targetGroups: ['Families', 'Carers', 'Other'],
     accessMode: 'Phone/online',
+    avgWaitDays: 3,
+    capacity: 10,
   },
   {
     id: 'PRG0413',
@@ -462,6 +552,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity', 'Practical life support', 'Belonging & participation'],
     targetGroups: ['Adults', 'Young people'],
     accessMode: 'Other',
+    avgWaitDays: 4,
+    capacity: 4,
   },
   {
     id: 'PRG0414',
@@ -472,6 +564,8 @@ export const PROGRAMS = [
     functions: ['Advocacy & rights', 'Coordination / navigation'],
     targetGroups: ['Families', 'Carers', 'Other'],
     accessMode: 'Phone/online',
+    avgWaitDays: 2,
+    capacity: 50,
   },
   {
     id: 'PRG0415',
@@ -482,6 +576,8 @@ export const PROGRAMS = [
     functions: ['Advocacy & rights', 'Court, custody & community transitions', 'Coordination / navigation'],
     targetGroups: ['Justice-involved', 'Other'],
     accessMode: 'Other',
+    avgWaitDays: 7,
+    capacity: 5,
   },
   {
     id: 'PRG0416',
@@ -493,6 +589,8 @@ export const PROGRAMS = [
     functions: ['Crisis response / stabilisation', 'Early recognition'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 8,
   },
   {
     id: 'PRG0417',
@@ -504,6 +602,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 25,
+    capacity: 0,
   },
   {
     id: 'PRG0418',
@@ -514,6 +614,8 @@ export const PROGRAMS = [
     functions: ['Coordination / navigation'],
     targetGroups: ['Families'],
     accessMode: 'Other',
+    avgWaitDays: 25,
+    capacity: 0,
   },
   {
     id: 'PRG0419',
@@ -524,6 +626,8 @@ export const PROGRAMS = [
     functions: ['Belonging & participation', 'Lived experience leadership'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 25,
+    capacity: 0,
   },
   {
     id: 'PRG0420',
@@ -534,6 +638,8 @@ export const PROGRAMS = [
     functions: ['Holding / continuity'],
     targetGroups: ['Culturally and Linguistically Diverse communities'],
     accessMode: 'Appointment',
+    avgWaitDays: 4,
+    capacity: 4,
   },
   {
     id: 'PRG0426',
@@ -544,6 +650,8 @@ export const PROGRAMS = [
     functions: ['Belonging & participation', 'Holding / continuity'],
     targetGroups: ['Other'],
     accessMode: 'Referral required',
+    avgWaitDays: 5,
+    capacity: 5,
   },
   {
     id: 'PRG0427',
@@ -554,6 +662,8 @@ export const PROGRAMS = [
     functions: ['Early recognition'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 5,
   },
   {
     id: 'PRG0428',
@@ -564,6 +674,8 @@ export const PROGRAMS = [
     functions: ['Belonging & participation', 'Holding / continuity'],
     targetGroups: ['Other'],
     accessMode: 'Other',
+    avgWaitDays: 5,
+    capacity: 8,
   },
 ]
 

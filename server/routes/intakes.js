@@ -55,6 +55,10 @@ function rowsToIntake(intakeRow, tags) {
     consentCrisis:        !!intakeRow.consent_crisis,
     assignedOrgId:        intakeRow.assigned_org_id || null,
     assignedAt:           intakeRow.assigned_at || null,
+    routedProgramId:      intakeRow.routed_program_id   || null,
+    routedAt:             intakeRow.routed_at           || null,
+    routedOrgName:        intakeRow.routed_org_name     || null,
+    routedProgramName:    intakeRow.routed_program_name || null,
     seekerGroups:   grouped.seekerGroup,
     supportTypes:   grouped.supportType,
     accessModes:    grouped.accessMode,
@@ -133,7 +137,7 @@ router.post('/', (req, res) => {
 // PATCH /api/intakes/:id
 router.patch('/:id', (req, res) => {
   const { id } = req.params
-  const { status, assignedOrgId } = req.body
+  const { status, assignedOrgId, routedProgramId, routedOrgName, routedProgramName } = req.body
   const row = db.prepare('SELECT id FROM intakes WHERE id = ?').get(id)
   if (!row) return res.status(404).json({ error: 'Not found' })
 
@@ -143,6 +147,12 @@ router.patch('/:id', (req, res) => {
     fields.push('assigned_org_id = ?', 'assigned_at = ?')
     params.push(assignedOrgId, new Date().toISOString())
   }
+  if (routedProgramId !== undefined) {
+    fields.push('routed_program_id = ?', 'routed_at = ?')
+    params.push(routedProgramId, new Date().toISOString())
+  }
+  if (routedOrgName     !== undefined) { fields.push('routed_org_name = ?');     params.push(routedOrgName)     }
+  if (routedProgramName !== undefined) { fields.push('routed_program_name = ?'); params.push(routedProgramName) }
   if (!fields.length) return res.status(400).json({ error: 'Nothing to update' })
 
   params.push(id)

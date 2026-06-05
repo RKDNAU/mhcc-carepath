@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Filter, ChevronDown } from 'lucide-react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
+import { Filter, ChevronDown, CheckCircle } from 'lucide-react'
 import IntakeDetailModal from './IntakeDetailModal'
 import { useData } from '../context/DataContext'
 import { PROGRAMS, ALL_TARGET_GROUPS, ALL_FUNCTIONS, ALL_ACCESS_MODES } from '../data/programs'
@@ -34,21 +34,31 @@ const SUPPORT_FN_MAP = {
 // Normalise access mode strings for comparison (strip spaces/slashes)
 const norm = s => s.toLowerCase().replace(/[\s/]/g, '')
 
-// ── New match scoring ────────────────────────────────────────────────────
-// Criteria (80%): each seekerGroup and supportType is one criterion.
-// 'Other' is excluded — it can't be matched to a specific program.
-// Capacity + outcomes (20%): if no capacity → 0; if capacity → (outcomeRate / 100) × 20.
+// ── Match scoring (5 components, 100% total) ─────────────────────────────
+//
+// 1. Describes       30%  proportion of seekerGroups (non-Other) matched
+// 2. Seeking support 30%  proportion of supportTypes (non-Other) matched
+// 3. Access modes    10%  any access mode match → 10%, else 0%
+// 4. Demographic     20%  (outcomeRate for age+gender / 100) × 20
+// 5. Availability    10%  three equal sub-factors (3.333% each):
+//      - Capacity      boolean – program.capacity > 0
+//      - Waitlist      relative depth across all programs (lower = better)
+//      - Wait time     relative avgWaitDays across all programs (lower = better)
+//
+// computeMatchScore receives pre-computed pd (mock data) and globalStats so
+// getTopMatchesWithScores can do a single pass for global baselines.
 
-function computeMatchScore(program, intake) {
-  // Criteria: seekerGroups (non-Other)
+function computeMatchScore(program, intake, pd, globalStats) {
+  // ── 1. Describes (up to 30%) ─────────────────────────────────────────────
   const groups = intake.seekerGroups.filter(g => g !== 'Other')
-  const matchedGroups   = groups.filter(g => {
+  const matchedGroups = groups.filter(g => {
     const mapped = TARGET_MAP[g]
     return mapped && mapped !== 'Other' && program.targetGroups.includes(mapped)
   })
   const unmatchedGroups = groups.filter(g => !matchedGroups.includes(g))
+  const describesScore = groups.length > 0 ? (matchedGroups.length / groups.length) * 30 : 0
 
-  // Criteria: supportTypes (non-Other)
+  // ── 2. Seeking Support For (up to 30%) ───────────────────────────────────
   const types = (intake.supportTypes || []).filter(t => t !== 'Other')
   const matchedTypes = types.filter(t => {
     const fns = SUPPORT_FN_MAP[t] || []
@@ -61,41 +71,55 @@ function computeMatchScore(program, intake) {
     )
   })
   const unmatchedTypes = types.filter(t => !matchedTypes.includes(t))
+  const seekingScore = types.length > 0 ? (matchedTypes.length / types.length) * 30 : 0
 
-  // Access modes (intake can have multiple; program has one)
-  const accessModes    = (intake.accessModes || [])
-  const matchedAccess  = accessModes.filter(am => norm(am) === norm(program.accessMode))
+  // ── 3. Access Modes (10% or 0%) ──────────────────────────────────────────
+  const accessModes = intake.accessModes || []
+  const matchedAccess = accessModes.filter(am => norm(am) === norm(program.accessMode))
   const unmatchedAccess = accessModes.filter(am => norm(am) !== norm(program.accessMode))
+  const accessScore = matchedAccess.length > 0 ? 10 : 0
 
-  const totalCriteria = groups.length + types.length
-  const matched       = matchedGroups.length + matchedTypes.length
-  const criteriaScore = totalCriteria > 0 ? (matched / totalCriteria) * 80 : 0
-
-  // Capacity gate
-  const pd          = mockProgramData(program, 'All')
-  const hasCapacity = pd.hasCapacity
-
-  // Outcomes component (only if capacity) + demographic detail
-  let outcomeScore  = 0
+  // ── 4. Demographic success (up to 20%) ───────────────────────────────────
+  let demographicScore = 0
   let demographicFit = 0
-  let ageGroup      = null
-
+  let ageGroup = null
   if (intake.dob) {
     ageGroup = getAgeGroup(intake.dob)
     const gender = mapGender(intake.gender || '')
-    const gPd    = mockProgramData(program, gender)
-    const entry  = gPd.outcomesByAge.find(d => d.label === ageGroup)
+    const gPd = mockProgramData(program, gender)
+    const entry = gPd.outcomesByAge.find(d => d.label === ageGroup)
     demographicFit = entry ? entry.value : 0
-    if (hasCapacity) outcomeScore = (demographicFit / 100) * 20
+    demographicScore = (demographicFit / 100) * 20
   }
 
+  // ── 5. Availability (up to 10%) ──────────────────────────────────────────
+  const PER_FACTOR = 10 / 3
+
+  // Capacity: boolean from explicit program field
+  const hasCapacity = (program.capacity ?? 0) > 0
+  const capacityScore = hasCapacity ? PER_FACTOR : 0
+
+  // Waitlist depth: lower is better; 0 → full score, max → 0
+  const wlDepth = pd.waitlistDepth
+  const waitlistScore = globalStats.maxWaitlistDepth > 0
+    ? (1 - wlDepth / globalStats.maxWaitlistDepth) * PER_FACTOR
+    : PER_FACTOR
+
+  // Average wait days: lower is better; min → full score, max → 0
+  const wd = program.avgWaitDays ?? 7
+  const wdRange = globalStats.maxAvgWaitDays - globalStats.minAvgWaitDays
+  const waitTimeScore = wdRange > 0
+    ? (1 - (wd - globalStats.minAvgWaitDays) / wdRange) * PER_FACTOR
+    : PER_FACTOR
+
+  const availabilityScore = capacityScore + waitlistScore + waitTimeScore
+
   return {
-    matchPercent:   Math.round(criteriaScore + outcomeScore),
-    criteriaScore:  Math.round(criteriaScore),
+    matchPercent: Math.round(describesScore + seekingScore + accessScore + demographicScore + availabilityScore),
     hasCapacity,
-    waitlistDepth:  pd.waitlistDepth,
-    matched,
-    totalCriteria,
+    waitlistDepth: wlDepth,
+    matched: matchedGroups.length + matchedTypes.length,
+    totalCriteria: groups.length + types.length,
     matchedGroups,
     unmatchedGroups,
     matchedTypes,
@@ -108,8 +132,20 @@ function computeMatchScore(program, intake) {
 }
 
 export function getTopMatchesWithScores(intake, n = 2) {
+  // Pre-compute mock data for all programs (needed for waitlistDepth + demographic)
+  const allPd = PROGRAMS.map(p => mockProgramData(p, 'All'))
+
+  // Global baselines for relative availability scoring
+  const allWaitlistDepths = allPd.map(pd => pd.waitlistDepth)
+  const allAvgWaitDays = PROGRAMS.map(p => p.avgWaitDays ?? 7)
+  const globalStats = {
+    maxWaitlistDepth: Math.max(...allWaitlistDepths, 1),
+    minAvgWaitDays:   Math.min(...allAvgWaitDays),
+    maxAvgWaitDays:   Math.max(...allAvgWaitDays),
+  }
+
   return PROGRAMS
-    .map(p => ({ program: p, ...computeMatchScore(p, intake) }))
+    .map((p, i) => ({ program: p, ...computeMatchScore(p, intake, allPd[i], globalStats) }))
     .filter(m => m.matched > 0)
     .sort((a, b) => b.matchPercent - a.matchPercent)
     .slice(0, n)
@@ -170,7 +206,7 @@ function FilterChip({ label, active, onClick }) {
   )
 }
 
-function FilterBar({ openPanel, togglePanel, selections, toggleSelection }) {
+function FilterBar({ openPanel, togglePanel, selections, toggleSelection, showRouted, onToggleShowRouted }) {
   const count = key => selections[key].length
   const hasAny = count('targetGroup') + count('function') + count('accessMode') > 0
 
@@ -211,18 +247,32 @@ function FilterBar({ openPanel, togglePanel, selections, toggleSelection }) {
             </button>
           )
         })}
-        {hasAny && (
+
+        {/* Right-side controls */}
+        <div className="ml-auto flex items-center gap-3">
+          {hasAny && (
+            <button
+              onClick={() => {
+                toggleSelection('targetGroup', null, true)
+                toggleSelection('function', null, true)
+                toggleSelection('accessMode', null, true)
+              }}
+              className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+            >
+              Clear all
+            </button>
+          )}
           <button
-            onClick={() => {
-              toggleSelection('targetGroup', null, true)
-              toggleSelection('function', null, true)
-              toggleSelection('accessMode', null, true)
-            }}
-            className="ml-auto text-xs text-slate-400 hover:text-red-500 transition-colors"
+            onClick={onToggleShowRouted}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
+              showRouted
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
+            }`}
           >
-            Clear all
+            {showRouted ? 'Hide Routed' : 'Show Routed'}
           </button>
-        )}
+        </div>
       </div>
 
       {/* Expanded chip rows */}
@@ -246,11 +296,34 @@ function FilterBar({ openPanel, togglePanel, selections, toggleSelection }) {
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
+// ─── Toast ──────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDismiss }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4500)
+    return () => clearTimeout(t)
+  }, [onDismiss])
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-xl animate-fade-in">
+      <CheckCircle size={18} className="flex-shrink-0" />
+      <div>
+        <p className="text-sm font-semibold">Referral routed</p>
+        <p className="text-xs opacity-80 mt-0.5">{message}</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main component ─────────────────────────────────────────────────────────
+
 export default function SharedIntake() {
   const { intakeQueue } = useData()
   const [openPanel, setOpenPanel] = useState(null)
   const [selections, setSelections] = useState(INITIAL_SELECTIONS)
   const [activeIntake, setActiveIntake] = useState(null)
+  const [showRouted, setShowRouted] = useState(false)
+  const [toast, setToast] = useState(null) // string message or null
 
   const togglePanel = key => setOpenPanel(prev => prev === key ? null : key)
 
@@ -268,6 +341,13 @@ export default function SharedIntake() {
     })
   }
 
+  const handleRouted = useCallback((program) => {
+    setActiveIntake(null)
+    setToast(`${program.name} · ${program.orgName}`)
+  }, [])
+
+  const dismissToast = useCallback(() => setToast(null), [])
+
   const allRows = useMemo(() =>
     [...intakeQueue]
       .sort((a, b) => {
@@ -279,6 +359,10 @@ export default function SharedIntake() {
         ...intake,
         age: ageFromDob(intake.dob),
         days: daysInQueue(intake.submittedAt),
+        // Frozen days: diff between submission and routing (used for routed rows)
+        frozenDays: intake.routedAt
+          ? Math.floor((new Date(intake.routedAt) - new Date(intake.submittedAt)) / 86_400_000)
+          : null,
         dateLabel: formatDate(intake.submittedAt),
         matches: getTopMatchesWithScores(intake),
       })),
@@ -286,15 +370,14 @@ export default function SharedIntake() {
 
   const rows = useMemo(() => {
     return allRows.filter(row => {
-      // Target group: filter value is from ALL_TARGET_GROUPS (e.g. 'Adults')
-      // Match if the intake's mapped target groups include the selected value
+      // Hide routed entries unless showRouted is active
+      if (!showRouted && row.status === 'routed') return false
+
       if (selections.targetGroup.length) {
         const mapped = row.seekerGroups.map(g => TARGET_MAP[g] || g)
         if (!selections.targetGroup.some(g => mapped.includes(g))) return false
       }
 
-      // Function: filter values are split terms (e.g. 'Holding', 'Coordination')
-      // Match if any of the intake's relevant functions contain that term
       if (selections.function.length) {
         const fns = [...new Set(row.supportTypes.flatMap(st => SUPPORT_FN_MAP[st] || []))]
         const parts = fns.flatMap(fn => fn.split(' / ').map(s => s.trim()))
@@ -303,7 +386,6 @@ export default function SharedIntake() {
         )) return false
       }
 
-      // Access mode: normalise both sides to handle spacing differences
       if (selections.accessMode.length) {
         if (!selections.accessMode.some(m =>
           (row.accessModes || []).some(am => norm(am) === norm(m))
@@ -312,9 +394,10 @@ export default function SharedIntake() {
 
       return true
     })
-  }, [allRows, selections])
+  }, [allRows, selections, showRouted])
 
   const totalFilters = Object.values(selections).flat().length
+  const colCount = showRouted ? 10 : 9
 
   return (
     <div>
@@ -331,11 +414,13 @@ export default function SharedIntake() {
         togglePanel={togglePanel}
         selections={selections}
         toggleSelection={toggleSelection}
+        showRouted={showRouted}
+        onToggleShowRouted={() => setShowRouted(v => !v)}
       />
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse" style={{ minWidth: '1100px' }}>
+          <table className="w-full text-sm border-collapse" style={{ minWidth: showRouted ? '1380px' : '1100px' }}>
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 {[
@@ -343,6 +428,7 @@ export default function SharedIntake() {
                   'Describes', 'Seeking support for',
                   'Urgency', 'Submitted', 'In queue',
                   'Top service matches',
+                  ...(showRouted ? ['Routed To'] : []),
                 ].map(h => (
                   <th
                     key={h}
@@ -356,16 +442,19 @@ export default function SharedIntake() {
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={colCount} className="px-4 py-12 text-center text-slate-400 text-sm">
                     No intakes match the active filters.
                   </td>
                 </tr>
               ) : rows.map(row => {
                 const u = URGENCY_META[row.urgency]
+                const isRouted = row.status === 'routed'
+                const displayDays = isRouted ? (row.frozenDays ?? row.days) : row.days
+
                 return (
                   <tr
                     key={row.id}
-                    className="hover:bg-brand-50 transition-colors cursor-pointer"
+                    className={`transition-colors cursor-pointer ${isRouted ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'hover:bg-brand-50'}`}
                     onClick={() => setActiveIntake(row)}
                     title="Click to open intake detail"
                   >
@@ -394,17 +483,28 @@ export default function SharedIntake() {
                     </td>
 
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${u.cls}`}>
-                        {u.label}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${u.cls}`}>
+                          {u.label}
+                        </span>
+                        {isRouted && (
+                          <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                            Routed
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.dateLabel}</td>
 
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`font-semibold ${row.days >= 7 ? 'text-red-600' : row.days >= 3 ? 'text-amber-600' : 'text-slate-700'}`}>
-                        {row.days}d
-                      </span>
+                      {isRouted ? (
+                        <span className="font-semibold text-slate-900">{displayDays}d</span>
+                      ) : (
+                        <span className={`font-semibold ${displayDays >= 7 ? 'text-red-600' : displayDays >= 3 ? 'text-amber-600' : 'text-slate-700'}`}>
+                          {displayDays}d
+                        </span>
+                      )}
                     </td>
 
                     <td className="px-4 py-3 min-w-[260px]">
@@ -437,6 +537,25 @@ export default function SharedIntake() {
                         </div>
                       )}
                     </td>
+
+                    {showRouted && (
+                      <td className="px-4 py-3 min-w-[240px]">
+                        {row.routedOrgName ? (
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-bold text-slate-900 leading-snug">{row.routedOrgName}</p>
+                            <p className="text-[11px] text-slate-600 leading-snug">{row.routedProgramName}</p>
+                            <p className="text-[11px] text-slate-400">
+                              {'Routed on: '}
+                              {row.routedAt
+                                ? new Date(row.routedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+                                : '—'}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 )
               })}
@@ -449,8 +568,11 @@ export default function SharedIntake() {
         <IntakeDetailModal
           intake={activeIntake}
           onClose={() => setActiveIntake(null)}
+          onRouted={handleRouted}
         />
       )}
+
+      {toast && <Toast message={toast} onDismiss={dismissToast} />}
     </div>
   )
 }

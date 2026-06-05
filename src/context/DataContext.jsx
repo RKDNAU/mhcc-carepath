@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { apiGet, apiPost } from '../api/client'
+import { apiGet, apiPost, apiPatch } from '../api/client'
 
 const DataContext = createContext(null)
 
@@ -48,6 +48,28 @@ export function DataProvider({ children }) {
     refresh()
   }
 
+  async function routeIntake(intakeId, program) {
+    const serverResponse = await apiPatch(`/intakes/${intakeId}`, {
+      status:            'routed',
+      assignedOrgId:     program.orgId,
+      routedProgramId:   program.id,
+      routedOrgName:     program.orgName,
+      routedProgramName: program.name,
+    })
+    // Merge local values in so the UI reflects the routing immediately,
+    // regardless of whether the server response includes the new fields yet.
+    const updated = {
+      ...serverResponse,
+      status:            'routed',
+      routedProgramId:   program.id,
+      routedAt:          serverResponse.routedAt ?? new Date().toISOString(),
+      routedOrgName:     program.orgName,
+      routedProgramName: program.name,
+    }
+    setIntakeQueue(prev => prev.map(i => i.id === intakeId ? updated : i))
+    return updated
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">
@@ -62,6 +84,7 @@ export function DataProvider({ children }) {
       intakeVolume,
       memberSharedData,
       submitIntake,
+      routeIntake,
       refresh,
     }}>
       {children}

@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { X, Heart, CheckCircle } from 'lucide-react'
+import { X, Heart } from 'lucide-react'
 import { PROGRAMS } from '../data/programs'
 import { getTopMatchesWithScores } from './SharedIntake'
+import { useData } from '../context/DataContext'
 
 const URGENCY_LABELS = {
   low: 'Can wait', medium: 'Soon', high: 'Urgent', crisis: 'Crisis',
@@ -47,9 +48,11 @@ function TagList({ label, values }) {
   )
 }
 
-export default function IntakeDetailModal({ intake, onClose }) {
+export default function IntakeDetailModal({ intake, onClose, onRouted }) {
+  const { routeIntake } = useData()
   const [selectedProgramId, setSelectedProgramId] = useState('')
-  const [routed, setRouted] = useState(false)
+  const [isRouting, setIsRouting] = useState(false)
+  const [routeError, setRouteError] = useState(null)
 
   const matches = useMemo(() => getTopMatchesWithScores(intake), [intake])
 
@@ -59,9 +62,17 @@ export default function IntakeDetailModal({ intake, onClose }) {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
   }, [])
 
-  const handleRoute = () => {
-    if (!selectedProgramId) return
-    setRouted(true)
+  const handleRoute = async () => {
+    if (!selectedProgramId || isRouting) return
+    setRouteError(null)
+    setIsRouting(true)
+    try {
+      await routeIntake(intake.id, selectedProg)
+      onRouted?.(selectedProg)
+    } catch (err) {
+      setRouteError('Routing failed — please try again.')
+      setIsRouting(false)
+    }
   }
 
   const selectedProg = PROGRAMS.find(p => p.id === selectedProgramId)
@@ -199,48 +210,39 @@ export default function IntakeDetailModal({ intake, onClose }) {
           {/* Route referral */}
           <section>
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Route referral</h3>
-
-            {routed ? (
-              <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl animate-fade-in">
-                <CheckCircle size={20} className="text-emerald-500 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-emerald-800">Referral routed</p>
-                  <p className="text-xs text-emerald-600 mt-0.5">
-                    This intake has been routed to <strong>{selectedProg?.name}</strong> ({selectedProg?.orgName}).
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-xs text-slate-500">
-                  Select a program to route this referral. The top matches above are recommended,
-                  but any program can be selected.
-                </p>
-                <select
-                  value={selectedProgramId}
-                  onChange={e => setSelectedProgramId(e.target.value)}
-                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="">Select a program…</option>
-                  {programsByOrg.map(([orgName, progs]) => (
-                    <optgroup key={orgName} label={orgName}>
-                      {progs.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-                <button
-                  onClick={handleRoute}
-                  disabled={!selectedProgramId}
-                  className="w-full inline-flex items-center justify-center gap-2 font-semibold text-sm px-6 py-3 rounded-xl transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed text-white"
-                  style={{ backgroundColor: selectedProgramId ? '#c8336d' : '#94a3b8' }}
-                >
-                  <Heart size={15} fill="currentColor" />
-                  Route referral
-                </button>
-              </div>
-            )}
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Select a program to route this referral. The top matches above are recommended,
+                but any program can be selected.
+              </p>
+              <select
+                value={selectedProgramId}
+                onChange={e => setSelectedProgramId(e.target.value)}
+                disabled={isRouting}
+                className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+              >
+                <option value="">Select a program…</option>
+                {programsByOrg.map(([orgName, progs]) => (
+                  <optgroup key={orgName} label={orgName}>
+                    {progs.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {routeError && (
+                <p className="text-xs text-red-600">{routeError}</p>
+              )}
+              <button
+                onClick={handleRoute}
+                disabled={!selectedProgramId || isRouting}
+                className="w-full inline-flex items-center justify-center gap-2 font-semibold text-sm px-6 py-3 rounded-xl transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed text-white"
+                style={{ backgroundColor: selectedProgramId && !isRouting ? '#c8336d' : '#94a3b8' }}
+              >
+                <Heart size={15} fill="currentColor" />
+                {isRouting ? 'Routing…' : 'Route referral'}
+              </button>
+            </div>
           </section>
 
         </div>
