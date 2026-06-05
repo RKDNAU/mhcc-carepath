@@ -7,8 +7,12 @@
     "dev:server": "node server/index.js",
     "dev:all": "concurrently --names \"API,UI\" --prefix-colors \"cyan,magenta\" \"npm run dev:server\" \"npm run dev\"",
     "seed": "node server/scripts/seed.js",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build:client": "vite build",
+    "preview": "vite preview",
+    "start": "node server/index.js"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "better-sqlite3": "^12.10.0",
