@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { X, Search, ExternalLink, ChevronDown, Filter } from 'lucide-react'
 import { PROGRAMS, ALL_TARGET_GROUPS, ALL_FUNCTIONS, ALL_ACCESS_MODES } from '../data/programs'
 import { ORGANISATIONS } from '../data/organisations'
+import { FilterChip, FILTER_SELECTIONS } from './ui/FilterControls'
 
 const orgUrlMap = Object.fromEntries(ORGANISATIONS.map(o => [o.id, o.url]))
 
@@ -26,21 +27,6 @@ const ACCESS_COLORS = {
   'Outreach / proactive reach-in': 'bg-purple-50 text-purple-700 border-purple-200',
   'Walk-in':                     'bg-green-50 text-green-700 border-green-200',
   'Other':                       'bg-slate-100 text-slate-600 border-slate-300',
-}
-
-function FilterChip({ label, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 whitespace-nowrap ${
-        active
-          ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-          : 'bg-white text-slate-600 border-slate-200 hover:border-brand-400 hover:text-brand-700'
-      }`}
-    >
-      {label}
-    </button>
-  )
 }
 
 function FilterBar({ openPanel, togglePanel, selections, toggleSelection }) {
@@ -70,7 +56,7 @@ function FilterBar({ openPanel, togglePanel, selections, toggleSelection }) {
             >
               {label}
               {count > 0 && (
-                <span className="w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center font-bold flex-shrink-0" style={{ backgroundColor: '#c8336d' }}>
+                <span className="w-4 h-4 rounded-full bg-highlight text-white text-[10px] flex items-center justify-center font-bold flex-shrink-0">
                   {count}
                 </span>
               )}
@@ -188,12 +174,10 @@ function ProgramCard({ program }) {
   )
 }
 
-const INITIAL_SELECTIONS = { targetGroup: [], function: [], accessMode: [] }
-
-export default function ServicesDirectory({ onClose }) {
+export default function ServicesDirectory({ onClose, embedded = false }) {
   const [query, setQuery] = useState('')
   const [openPanel, setOpenPanel] = useState(null)
-  const [selections, setSelections] = useState(INITIAL_SELECTIONS)
+  const [selections, setSelections] = useState(FILTER_SELECTIONS)
 
   const togglePanel = (key) => setOpenPanel(prev => prev === key ? null : key)
 
@@ -228,9 +212,12 @@ export default function ServicesDirectory({ onClose }) {
   }, [query, selections])
 
   const totalFilters = selections.targetGroup.length + selections.function.length + selections.accessMode.length
+  const shellClass = embedded
+    ? 'h-full min-h-0 flex flex-col bg-slate-50 animate-fade-in rounded-xl border border-slate-200 overflow-hidden'
+    : 'fixed inset-0 z-50 flex flex-col bg-slate-50 animate-fade-in'
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 animate-fade-in">
+    <div className={shellClass}>
       {/* Header */}
       <div className="bg-white border-b border-slate-100 shadow-sm flex-shrink-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
@@ -242,12 +229,14 @@ export default function ServicesDirectory({ onClose }) {
               {' '}· Canberra & ACT
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-          >
-            <X size={20} />
-          </button>
+          {!embedded && (
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         {/* Search */}
@@ -282,7 +271,7 @@ export default function ServicesDirectory({ onClose }) {
               <Search size={32} className="mx-auto mb-3 opacity-40" />
               <p className="text-sm font-medium">No programs match your search or filters</p>
               <button
-                onClick={() => { setQuery(''); setSelections(INITIAL_SELECTIONS) }}
+                onClick={() => { setQuery(''); setSelections(FILTER_SELECTIONS) }}
                 className="mt-3 text-xs text-brand-600 hover:underline"
               >
                 Clear search and filters

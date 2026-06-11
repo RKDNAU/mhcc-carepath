@@ -3,7 +3,7 @@ import carePath from '/img/CarePath.png'
 
 const PLATFORM_LINKS = ['About CarePath', 'How It Works', 'For Providers', 'Partner Organisations']
 const SERVICE_LINKS = ['Counselling & Therapy', 'Crisis Support', 'Support Groups', 'Youth Services']
-const RESOURCE_LINKS = ['Self-Help Guides', 'Crisis Helplines', 'Services Directory', 'FAQ']
+const RESOURCE_LINKS = ['Self-Help Guides', 'Crisis Helplines', 'FAQ']
 const LEGAL_LINKS = ['Terms of Use', 'Accessibility', 'Feedback']
 
 export default function Footer({ onPrivacyClick }) {
@@ -95,7 +95,7 @@ export default function Footer({ onPrivacyClick }) {
           <p>© 2026 Mental Health Community Coalition of the ACT. All rights reserved.</p>
           <p>
             Built for our community, with{' '}
-            <Heart size={11} className="inline" fill="currentColor" style={{ color: '#c8336d' }} /> in Canberra.
+            <Heart size={11} className="inline text-highlight" fill="currentColor" /> in Canberra.
           </p>
         </div>
       </div>

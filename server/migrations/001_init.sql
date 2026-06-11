@@ -34,13 +34,13 @@ CREATE TABLE IF NOT EXISTS intake_tags (
   PRIMARY KEY (intake_id, kind, value)
 );
 
--- Weekly aggregate for the Shared Data bar chart
+-- Weekly aggregate for the Intake Data volume chart
 CREATE TABLE IF NOT EXISTS intake_volume_weeks (
   week TEXT PRIMARY KEY,
   count INTEGER NOT NULL
 );
 
--- Program-level metrics that drive Shared Data reports
+-- Program-level metrics that drive Sector Data and Program Data reports
 CREATE TABLE IF NOT EXISTS program_metrics (
   program_id TEXT NOT NULL,
   gender TEXT NOT NULL,
@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS program_metrics_age (
   program_id TEXT NOT NULL,
   gender TEXT NOT NULL,
   age_group TEXT NOT NULL,
-  outcome_rate INTEGER,
+  positive_outcome INTEGER,
+  negative_outcome INTEGER,
   clients INTEGER,
   PRIMARY KEY (program_id, gender, age_group),
   FOREIGN KEY (program_id, gender) REFERENCES program_metrics(program_id, gender) ON DELETE CASCADE

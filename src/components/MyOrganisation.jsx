@@ -1,45 +1,28 @@
 import { Phone, Mail, MapPin, Clock, ExternalLink, BadgeCheck } from 'lucide-react'
 
 const VALUES = [
-  {
-    title: 'Respect',
-    desc: 'Valuing every person and ensuring they feel seen, heard, and treated fairly.',
-  },
-  {
-    title: 'Creativity',
-    desc: 'Believing there is always a way forward through innovative solutions.',
-  },
-  {
-    title: 'Care',
-    desc: 'Creating a supportive, safe, and understanding environment.',
-  },
-  {
-    title: 'Enjoyment',
-    desc: 'Celebrating progress and learning together.',
-  },
+  { title: 'Respect', desc: 'Honouring the dignity and unique story of every person we walk alongside.' },
+  { title: 'Creativity', desc: 'Finding new paths when the obvious ones are blocked.' },
+  { title: 'Care', desc: 'Showing up with warmth, consistency, and genuine concern.' },
+  { title: 'Enjoyment', desc: 'Finding moments of lightness and marking milestones that matter.' },
 ]
 
 const ACCREDITATIONS = [
-  'NDIS Registered Provider',
-  'ACT Platinum Recognised Healthier Workplace',
-  'Canberra Business Chamber – Disability Action Pledge',
+  'Demo provider profile',
+  'CarePath portal sample',
+  'Fictional organisation',
 ]
 
-export default function MyOrganisation() {
+export default function MyOrganisation({ provider }) {
   return (
     <div className="max-w-4xl space-y-6">
-
-      {/* Header card */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Nexus Human Services</h2>
-            <p className="text-highlight font-medium mt-1 italic">"Your Journey. Our Support."</p>
+            <h2 className="text-2xl font-bold text-slate-900">{provider.orgName}</h2>
+            <p className="text-highlight font-medium mt-1 italic">"{provider.tagline}"</p>
             <p className="text-slate-500 text-sm mt-3 leading-relaxed max-w-xl">
-              A community-based organisation supporting people with disability and psychosocial
-              wellbeing across Canberra and Queanbeyan for over 30 years. Nexus delivers NDIS
-              supports focused on employment, life skills, personal care, community participation,
-              and life transitions.
+              {provider.description}
             </p>
           </div>
           <div className="flex-shrink-0 text-right space-y-1.5">
@@ -54,64 +37,44 @@ export default function MyOrganisation() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* Contact details */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Contact</h3>
           <div className="space-y-3 text-sm">
-            <a
-              href="tel:1800163987"
-              className="flex items-center gap-3 text-slate-700 hover:text-brand-600 transition-colors"
-            >
+            <a href="tel:1800247553" className="flex items-center gap-3 text-slate-700 hover:text-brand-600 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
                 <Phone size={14} className="text-brand-600" />
               </div>
-              1800 163 987
+              1800 247 553
             </a>
-            <a
-              href="mailto:enquiries@nexushumanservices.com.au"
-              className="flex items-center gap-3 text-slate-700 hover:text-brand-600 transition-colors"
-            >
+            <a href="mailto:demo@greenerpastures.example" className="flex items-center gap-3 text-slate-700 hover:text-brand-600 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
                 <Mail size={14} className="text-brand-600" />
               </div>
-              enquiries@nexushumanservices.com.au
+              demo@greenerpastures.example
             </a>
             <div className="flex items-start gap-3 text-slate-600">
               <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <MapPin size={14} className="text-brand-600" />
               </div>
-              Level 01, Unit 67-68<br />10 Lonsdale Street, Braddon ACT 2612
+              Demo office<br />Canberra ACT 2601
             </div>
             <div className="flex items-center gap-3 text-slate-600">
               <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
                 <Clock size={14} className="text-brand-600" />
               </div>
-              Monday - Friday, 9:00 am - 5:00 pm
+              Monday - Friday, 8:30 am - 4:30 pm
             </div>
-            <a
-              href="https://nexushumanservices.com.au"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 text-brand-600 hover:text-brand-800 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
-                <ExternalLink size={14} className="text-brand-600" />
-              </div>
-              nexushumanservices.com.au
-            </a>
           </div>
         </div>
 
-        {/* Quick stats */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">At a glance</h3>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { value: '30+', label: 'Years in the community' },
-              { value: '35',  label: 'Staff members'          },
-              { value: 'ACT', label: 'Service territory'      },
-              { value: 'NDIS', label: 'Registered provider'  },
+              { value: 'Demo', label: 'Provider profile' },
+              { value: '2', label: 'Controlled programs' },
+              { value: 'ACT', label: 'Service territory' },
+              { value: 'Mock', label: 'Data source' },
             ].map(({ value, label }) => (
               <div key={label} className="bg-slate-50 rounded-xl p-4">
                 <p className="text-2xl font-extrabold text-slate-900">{value}</p>
@@ -122,7 +85,6 @@ export default function MyOrganisation() {
         </div>
       </div>
 
-      {/* Values */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Our values</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -135,12 +97,11 @@ export default function MyOrganisation() {
         </div>
       </div>
 
-      {/* CarePath membership */}
       <div className="bg-brand-50 border border-brand-100 rounded-2xl p-5 flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-brand-800">CarePath member organisation</p>
+          <p className="text-sm font-semibold text-brand-800">CarePath demo organisation</p>
           <p className="text-xs text-brand-600 mt-0.5">
-            Nexus Human Services is a registered member of the Mental Health Community Coalition of the ACT.
+            {provider.orgName} is fictional and does not represent a real MHCC member organisation.
           </p>
         </div>
         <a
@@ -153,7 +114,6 @@ export default function MyOrganisation() {
           <ExternalLink size={11} />
         </a>
       </div>
-
     </div>
   )
 }

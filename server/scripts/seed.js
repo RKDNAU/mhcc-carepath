@@ -1,180 +1,274 @@
 'use strict'
-// One-shot seed. Safe to re-run — skips if data already exists.
-// Usage: node server/scripts/seed.js
+
 const db = require('../db')
 const { encrypt } = require('../crypto')
+const { AGE_GROUPS } = require('../csvUtils')
+const { PROGRAMS } = require('../programs')
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-const AGE_GROUPS = ['Under 18', '18-25', '26-35', '36-45', '46-55', '56-65', '65+']
-const G_OFFSET   = { All: 0, Female: 100, Male: 200, 'Non-binary': 300 }
-const GENDERS    = ['Female', 'Male', 'Non-binary']
+const GENDERS = ['Female', 'Male', 'Non-binary']
+const G_OFFSET = { Female: 100, Male: 200, 'Non-binary': 300 }
+const SUPPORT_TYPES = [
+  'Anxiety / Stress',
+  'Depression',
+  'Trauma / PTSD',
+  'Grief & Loss',
+  'Relationship Issues',
+  'Family / Parenting',
+  'Substance Use',
+  'Eating Disorders',
+  'Youth Mental Health',
+  'Aged Care Support',
+]
+const SEEKER_GROUPS = [
+  'Adult',
+  'Youth',
+  'Family',
+  'Carer',
+  'LGBTQIA+',
+  'Person with psychosocial disability',
+  'Culturally and Linguistically Diverse community member',
+  'Aboriginal or Torres Strait Islander',
+]
+const ACCESS_MODES = ['Appointment', 'Phone/online', 'Self-referral', 'Referral required', 'Outreach / proactive reach-in']
+const SUBURBS = ['Belconnen', 'Tuggeranong', 'Gungahlin', 'Woden', 'Charnwood', 'Dickson', 'Holder', 'Macquarie']
+const URGENCIES = ['low', 'medium', 'medium', 'high', 'high', 'crisis']
 
 function rng(seed, offset) {
   const x = Math.sin(seed * 9301 + offset * 49297 + 233) * 10000
   return x - Math.floor(x)
 }
 
-function mockProgramData(programId, targetGroups, gender) {
-  const n = parseInt(programId.replace('PRG', ''), 10)
+function programSeed(programId) {
+  const parsed = parseInt(String(programId).replace(/\D/g, ''), 10)
+  if (!Number.isNaN(parsed)) return parsed
+  return String(programId).split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0)
+}
+
+const AGE_RANGES = {
+  '0-3':   { start: 0,  end: 3,  width: 3 },
+  '4-6':   { start: 4,  end: 6,  width: 3 },
+  '7-9':   { start: 7,  end: 9,  width: 3 },
+  '10-12': { start: 10, end: 12, width: 3 },
+  '13-15': { start: 13, end: 15, width: 3 },
+  '16-18': { start: 16, end: 18, width: 3 },
+  '19-21': { start: 19, end: 21, width: 3 },
+  '22-25': { start: 22, end: 25, width: 4 },
+  '26-35': { start: 26, end: 35, width: 10 },
+  '36-45': { start: 36, end: 45, width: 10 },
+  '46-55': { start: 46, end: 55, width: 10 },
+  '56-65': { start: 56, end: 65, width: 10 },
+  '65+':   { start: 66, end: 75, width: 10 },
+}
+
+function ageMortalityFactor(age) {
+  const boundedAge = Math.max(0, Math.min(75, age))
+  return 1 - (boundedAge / 75) * 0.30
+}
+
+function ageGroupWeight(ageGroup) {
+  const range = AGE_RANGES[ageGroup]
+  if (!range) return 1
+  const midpoint = (range.start + range.end) / 2
+  return range.width * ageMortalityFactor(midpoint)
+}
+
+function weightedAgeCounts(total, seed, offset) {
+  const weights = AGE_GROUPS.map((ageGroup, i) => {
+    const variation = 0.97 + rng(seed, offset + i) * 0.06
+    return ageGroupWeight(ageGroup) * variation
+  })
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0) || 1
+  return weights.map(weight => Math.max(0, Math.round((total * weight) / totalWeight)))
+}
+
+function buildProgramMetricSeed(program, gender, capacityBand, hasProgramWaitlist = false) {
+  const n = programSeed(program.id)
   const g = G_OFFSET[gender] || 0
-  const isYouth  = targetGroups.includes('Young people')
-  const isFamily = targetGroups.includes('Families')
+  const isYouth = program.targetGroups.includes('Young people')
+  const isFamily = program.targetGroups.includes('Families')
+
+  const baseCapacity = Math.round(42 + rng(n, 20) * 38)
+  const femaleCapacity = Math.max(10, Math.round(baseCapacity * 0.38))
+  const maleCapacity = Math.max(10, Math.round(baseCapacity * 0.37))
+  const genderCapacity = {
+    Female: femaleCapacity,
+    Male: maleCapacity,
+    'Non-binary': Math.max(10, baseCapacity - femaleCapacity - maleCapacity),
+  }
+  const totalCapacity = genderCapacity[gender] || Math.max(1, Math.round(baseCapacity / GENDERS.length))
+  let currentClients
+  let waitlistDepth
+
+  if (capacityBand === 'available') {
+    const spare = Math.max(1, Math.round(1 + rng(n + g, 22) * Math.max(2, totalCapacity * 0.28)))
+    currentClients = Math.max(0, totalCapacity - spare)
+    waitlistDepth = 0
+  } else if (capacityBand === 'atCapacity') {
+    currentClients = totalCapacity
+    waitlistDepth = hasProgramWaitlist
+      ? 1 + Math.floor(rng(n + g, 28) * 3)
+      : 0
+  } else if (capacityBand === 'overCapacity') {
+    const maxOverBy = Math.max(1, Math.floor(totalCapacity * 0.10))
+    const overBy = Math.max(1, Math.ceil(rng(n + g, 25) * maxOverBy))
+    currentClients = totalCapacity + overBy
+    waitlistDepth = hasProgramWaitlist
+      ? overBy + Math.floor(rng(n + g, 29) * 3)
+      : 0
+  } else {
+    currentClients = totalCapacity
+    waitlistDepth = 0
+  }
+
+  const availablePct = Math.max(0, Math.round(((totalCapacity - currentClients) / totalCapacity) * 100))
+  const totalClients = Math.round(15 + rng(n + g, 10) * 100)
+
+  const demographicSplit = weightedAgeCounts(currentClients, n + g, 30)
+  const outcomeSampleByAge = weightedAgeCounts(totalClients, n + g, 70)
 
   const outcomesByAge = AGE_GROUPS.map((_, i) => {
-    let value = Math.round(50 + rng(n + g, i + 1) * 36)
-    if (isYouth  && i <= 2) value = Math.min(93, value + 14)
-    if (isFamily && i >= 2 && i <= 4) value = Math.min(93, value + 8)
-    if (!isYouth && i >= 5) value = Math.min(93, value + 6)
-    return value
+    const total = Math.max(1, outcomeSampleByAge[i])
+    let baseRate = 0.85
+    if (isYouth && i <= 6) baseRate = 0.92
+    if (isFamily && i >= 4 && i <= 9) baseRate = 0.88
+    if (!isYouth && i >= 8) baseRate = 0.88
+    const rate = Math.min(0.97, Math.max(0.50, baseRate + (rng(n + g, 60 + i) - 0.5) * 0.24))
+    const positive = Math.min(total - 1, Math.round(total * rate))
+    return { positive, negative: total - positive }
   })
 
-  const totalCapacity  = Math.round(10 + rng(n, 20) * 40)
-  const rawOcc         = rng(n, 21)
-  const occupancyRate  = rawOcc > 0.85 ? 0.95 + rng(n, 27) * 0.25 : rawOcc * 0.9
-  const currentClients = Math.round(totalCapacity * Math.min(occupancyRate, 1.2))
-  const availablePct   = Math.max(0, Math.round(((totalCapacity - currentClients) / totalCapacity) * 100))
-  const waitlistBase   = availablePct < 10 ? 8 + rng(n, 32) * 18
-                       : availablePct < 30 ? 2 + rng(n, 32) * 7
-                       :                         rng(n, 32) * 3
-  const demographicSplit = AGE_GROUPS.map((_, i) =>
-    Math.max(0, Math.round(rng(n + g, 30 + i) * (currentClients / 4)))
-  )
-
   return {
-    avg_wait_days:   parseFloat((1.5 + rng(n + g, 8) * 12).toFixed(1)),
+    avg_wait_days: parseFloat((1.5 + rng(n + g, 8) * 12).toFixed(1)),
     completion_rate: Math.round(54 + rng(n + g, 9) * 38),
-    total_clients:   Math.round(15 + rng(n + g, 10) * 100),
-    total_capacity:  totalCapacity, current_clients: currentClients,
-    available_pct:   availablePct,  waitlist_depth:  Math.round(waitlistBase),
-    has_capacity:    currentClients < totalCapacity ? 1 : 0,
-    outcomesByAge, demographicSplit,
+    total_clients: totalClients,
+    total_capacity: totalCapacity,
+    current_clients: currentClients,
+    available_pct: availablePct,
+    waitlist_depth: waitlistDepth,
+    has_capacity: currentClients < totalCapacity ? 1 : 0,
+    outcomesByAge,
+    demographicSplit,
   }
 }
 
-const PROGRAMS = [
-  { id: 'PRG0010', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0084', targetGroups: ['Adults', 'Young people', 'Aboriginal and Torres Strait Islander peoples', 'Culturally and Linguistically Diverse communities', 'LGBTQIA+', 'Other'] },
-  { id: 'PRG0087', targetGroups: ['Adults', 'Young people', 'Other'] },
-  { id: 'PRG0088', targetGroups: ['Adults', 'Young people', 'People with psychosocial disability'] },
-  { id: 'PRG0089', targetGroups: ['Adults', 'Young people', 'People with psychosocial disability', 'Other'] },
-  { id: 'PRG0150', targetGroups: ['Carers'] },
-  { id: 'PRG0170', targetGroups: ['Adults', 'Families', 'Other'] },
-  { id: 'PRG0186', targetGroups: ['Adults', 'Young people'] },
-  { id: 'PRG0190', targetGroups: ['Adults', 'Other'] },
-  { id: 'PRG0191', targetGroups: ['Adults', 'Other'] },
-  { id: 'PRG0197', targetGroups: ['Other'] },
-  { id: 'PRG0220', targetGroups: ['Adults', 'Young people'] },
-  { id: 'PRG0222', targetGroups: ['Families', 'Carers'] },
-  { id: 'PRG0223', targetGroups: ['Young people', 'Families', 'Carers'] },
-  { id: 'PRG0224', targetGroups: ['Adults', 'Young people'] },
-  { id: 'PRG0232', targetGroups: ['Young people'] },
-  { id: 'PRG0234', targetGroups: ['Other'] },
-  { id: 'PRG0242', targetGroups: ['Adults', 'Families', 'Carers', 'Other'] },
-  { id: 'PRG0244', targetGroups: ['Adults', 'Other'] },
-  { id: 'PRG0247', targetGroups: ['Adults', 'Families', 'Carers', 'LGBTQIA+', 'Other'] },
-  { id: 'PRG0254', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0258', targetGroups: ['Adults', 'Families'] },
-  { id: 'PRG0261', targetGroups: ['Other'] },
-  { id: 'PRG0270', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0284', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0285', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0286', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0291', targetGroups: ['Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0293', targetGroups: ['Young people', 'Families', 'Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0294', targetGroups: ['Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0295', targetGroups: ['Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0296', targetGroups: ['Young people', 'Families', 'Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0302', targetGroups: ['Adults'] },
-  { id: 'PRG0306', targetGroups: ['Adults', 'Young people'] },
-  { id: 'PRG0309', targetGroups: ['Adults', 'Young people', 'Other'] },
-  { id: 'PRG0310', targetGroups: ['Adults', 'Young people', 'Other'] },
-  { id: 'PRG0323', targetGroups: ['Adults'] },
-  { id: 'PRG0324', targetGroups: ['Adults', 'Families'] },
-  { id: 'PRG0352', targetGroups: ['Other'] },
-  { id: 'PRG0362', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0363', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0364', targetGroups: ['Adults', 'People with psychosocial disability'] },
-  { id: 'PRG0370', targetGroups: ['Adults'] },
-  { id: 'PRG0388', targetGroups: ['Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0410', targetGroups: ['Families', 'Carers', 'Other'] },
-  { id: 'PRG0413', targetGroups: ['Adults', 'Young people'] },
-  { id: 'PRG0414', targetGroups: ['Families', 'Carers', 'Other'] },
-  { id: 'PRG0415', targetGroups: ['Justice-involved', 'Other'] },
-  { id: 'PRG0416', targetGroups: ['Other'] },
-  { id: 'PRG0417', targetGroups: ['Other'] },
-  { id: 'PRG0418', targetGroups: ['Families'] },
-  { id: 'PRG0419', targetGroups: ['Other'] },
-  { id: 'PRG0420', targetGroups: ['Culturally and Linguistically Diverse communities'] },
-  { id: 'PRG0426', targetGroups: ['Other'] },
-  { id: 'PRG0427', targetGroups: ['Other'] },
-  { id: 'PRG0428', targetGroups: ['Other'] },
-]
+function isoDaysAgo(days, hour = 9, minute = 0) {
+  const d = new Date()
+  d.setHours(hour, minute, 0, 0)
+  d.setDate(d.getDate() - days)
+  return d.toISOString()
+}
 
-const SAMPLE_INTAKES = [
-  { id: 'INT001', dob: '1991-01-15', gender: 'Female',     suburb: 'Belconnen',  urgency: 'medium', submittedAt: '2026-05-24T09:14:00', seekerGroups: ['Adult', 'Carer'],            supportTypes: ['Anxiety / Stress', 'Family / Parenting'],   accessModes: ['Appointment'] },
-  { id: 'INT002', dob: '2003-09-20', gender: 'Male',       suburb: 'Tuggeranong',urgency: 'low',    submittedAt: '2026-05-27T14:22:00', seekerGroups: ['Youth', 'LGBTQIA+'],          supportTypes: ['Depression', 'Relationship Issues'],         accessModes: ['Phone/online'] },
-  { id: 'INT003', dob: '1981-02-28', gender: 'Non-binary', suburb: 'Gungahlin',  urgency: 'high',   submittedAt: '2026-05-28T11:05:00', seekerGroups: ['Adult', 'Person with psychosocial disability'], supportTypes: ['Trauma / PTSD'],      accessModes: ['Appointment', 'Referral required'] },
-  { id: 'INT004', dob: '1967-11-05', gender: 'Female',     suburb: 'Woden',      urgency: 'medium', submittedAt: '2026-05-21T08:45:00', seekerGroups: ['Adult', 'Carer'],            supportTypes: ['Grief & Loss', 'Aged Care Support'],         accessModes: ['Self-referral'] },
-  { id: 'INT005', dob: '2006-08-12', gender: 'Male',       suburb: 'Charnwood',  urgency: 'high',   submittedAt: '2026-05-26T16:33:00', seekerGroups: ['Youth', 'Aboriginal or Torres Strait Islander'], supportTypes: ['Depression', 'Substance Use'], accessModes: ['Outreach / proactive reach-in'] },
-  { id: 'INT006', dob: '1959-03-22', gender: 'Female',     suburb: 'Phillip',    urgency: 'low',    submittedAt: '2026-05-17T10:18:00', seekerGroups: ['Adult'],                     supportTypes: ['Aged Care Support', 'Anxiety / Stress'],    accessModes: ['Phone/online', 'Appointment'] },
-  { id: 'INT007', dob: '1994-12-01', gender: 'Female',     suburb: 'Civic',      urgency: 'medium', submittedAt: '2026-05-25T13:47:00', seekerGroups: ['Adult', 'Culturally and Linguistically Diverse community member'], supportTypes: ['Anxiety / Stress', 'Relationship Issues'], accessModes: ['Appointment'] },
-  { id: 'INT008', dob: '1997-07-14', gender: 'Male',       suburb: 'Dickson',    urgency: 'high',   submittedAt: '2026-05-23T09:02:00', seekerGroups: ['Person with psychosocial disability', 'Justice-involved'], supportTypes: ['Depression', 'Substance Use'], accessModes: ['Other'] },
-  { id: 'INT009', dob: '1984-02-08', gender: 'Female',     suburb: 'Holder',     urgency: 'medium', submittedAt: '2026-05-20T15:55:00', seekerGroups: ['Family', 'Carer'],           supportTypes: ['Family / Parenting', 'Grief & Loss'],        accessModes: ['Appointment', 'Phone/online'] },
-  { id: 'INT010', dob: '2009-10-30', gender: 'Male',       suburb: 'Macquarie',  urgency: 'crisis', submittedAt: '2026-05-29T07:30:00', seekerGroups: ['Youth'],                     supportTypes: ['Youth Mental Health', 'Anxiety / Stress'],  accessModes: ['Self-referral'] },
-]
+function dateOnlyDaysAgo(days) {
+  return isoDaysAgo(days).slice(0, 10)
+}
 
-const INTAKE_VOLUME_DEFAULT = [
-  { week: 'Apr 7',  count: 3 }, { week: 'Apr 14', count: 5 }, { week: 'Apr 21', count: 4 },
-  { week: 'Apr 28', count: 6 }, { week: 'May 5',  count: 3 }, { week: 'May 12', count: 1 },
-  { week: 'May 19', count: 4 }, { week: 'May 26', count: 5 },
-]
+function weekLabel(daysAgo) {
+  const d = new Date(isoDaysAgo(daysAgo))
+  return d.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })
+}
 
-// ── Seed ──────────────────────────────────────────────────────────────────────
+function sampleIntakes() {
+  return Array.from({ length: 54 }, (_, i) => {
+    const seed = i + 1
+    const daysAgo = Math.max(1, 123 - Math.round(i * 2.35) - Math.floor(rng(seed, 1) * 3))
+    const supportA = SUPPORT_TYPES[i % SUPPORT_TYPES.length]
+    const supportB = SUPPORT_TYPES[(i * 3 + 2) % SUPPORT_TYPES.length]
+    const seekerA = SEEKER_GROUPS[i % SEEKER_GROUPS.length]
+    const seekerB = SEEKER_GROUPS[(i * 2 + 3) % SEEKER_GROUPS.length]
+    const program = PROGRAMS[(i * 7 + 3) % PROGRAMS.length]
+    const routeDelay = Math.round(1 + rng(seed, 6) * 6)
+    const isRecent = daysAgo <= 30
+    const isRouted = !isRecent || rng(seed, 7) < 0.35
 
-const existingIntakes = db.prepare('SELECT COUNT(*) as n FROM intakes').get().n
-const existingVolume  = db.prepare('SELECT COUNT(*) as n FROM intake_volume_weeks').get().n
-const existingMetrics = db.prepare('SELECT COUNT(*) as n FROM program_metrics').get().n
-
-let seeded = 0
-
-if (existingIntakes === 0) {
-  console.log('Seeding intakes…')
-  const insertIntake = db.prepare(`
-    INSERT INTO intakes (id, submitted_at, dob, gender, suburb, urgency, consent_data, consent_crisis, status)
-    VALUES (?, ?, ?, ?, ?, ?, 1, 1, 'queued')
-  `)
-  const insertTag = db.prepare(
-    'INSERT OR IGNORE INTO intake_tags (intake_id, kind, value) VALUES (?, ?, ?)'
-  )
-  db.transaction(() => {
-    for (const r of SAMPLE_INTAKES) {
-      insertIntake.run(r.id, r.submittedAt, encrypt(r.dob), r.gender, r.suburb, r.urgency)
-      for (const v of r.seekerGroups)  insertTag.run(r.id, 'seekerGroup',  v)
-      for (const v of r.supportTypes)  insertTag.run(r.id, 'supportType',  v)
-      for (const v of r.accessModes)   insertTag.run(r.id, 'accessMode',   v)
+    return {
+      id: `INT${String(seed).padStart(3, '0')}`,
+      daysAgo,
+      hour: 8 + (i % 9),
+      gender: GENDERS[i % GENDERS.length],
+      dob: `${1958 + (i * 7) % 49}-${String(1 + (i % 12)).padStart(2, '0')}-${String(1 + (i * 3) % 27).padStart(2, '0')}`,
+      suburb: SUBURBS[i % SUBURBS.length],
+      urgency: URGENCIES[i % URGENCIES.length],
+      seekerGroups: seekerA === seekerB ? [seekerA] : [seekerA, seekerB],
+      supportTypes: supportA === supportB ? [supportA] : [supportA, supportB],
+      accessModes: [ACCESS_MODES[i % ACCESS_MODES.length]],
+      status: isRouted ? 'routed' : 'queued',
+      assignedOrgId: isRouted ? program.orgId : null,
+      assignedAt: isRouted ? isoDaysAgo(Math.max(0, daysAgo - Math.max(0, routeDelay - 1)), 10, 0) : null,
+      routedProgramId: isRouted ? program.id : null,
+      routedAt: isRouted ? isoDaysAgo(Math.max(0, daysAgo - routeDelay), 11, 30) : null,
+      routedOrgName: isRouted ? program.orgName : null,
+      routedProgramName: isRouted ? (program.shortName || program.name) : null,
     }
-  })()
-  console.log(`  ✓ ${SAMPLE_INTAKES.length} intakes inserted`)
-  seeded++
-} else {
-  console.log(`  – Intakes already seeded (${existingIntakes} rows), skipping`)
+  }).map(r => ({ ...r, submittedAt: isoDaysAgo(r.daysAgo, r.hour, 15) }))
 }
 
-if (existingVolume === 0) {
-  console.log('Seeding intake volume…')
+function intakeVolumeWeeks() {
+  return Array.from({ length: 18 }, (_, i) => {
+    const days = (17 - i) * 7
+    return {
+      week: weekLabel(days),
+      count: Math.round(2 + rng(i + 1, 90) * 5),
+    }
+  })
+}
+
+function seedIntakes() {
+  const insertIntake = db.prepare(`
+    INSERT INTO intakes (
+      id, submitted_at, dob, gender, suburb, urgency, consent_data, consent_crisis, status,
+      assigned_org_id, assigned_at, routed_program_id, routed_at, routed_org_name, routed_program_name
+    )
+    VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  const insertTag = db.prepare('INSERT OR IGNORE INTO intake_tags (intake_id, kind, value) VALUES (?, ?, ?)')
+  const insertRoute = db.prepare(`
+    INSERT INTO intake_routes (intake_id, program_id, org_id, org_name, program_name, support_type, routed_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  const rows = sampleIntakes()
+
+  for (const r of rows) {
+    insertIntake.run(
+      r.id,
+      r.submittedAt,
+      encrypt(r.dob),
+      r.gender,
+      r.suburb,
+      r.urgency,
+      r.status,
+      r.assignedOrgId,
+      r.assignedAt,
+      r.routedProgramId,
+      r.routedAt,
+      r.routedOrgName,
+      r.routedProgramName
+    )
+    for (const v of r.seekerGroups) insertTag.run(r.id, 'seekerGroup', v)
+    for (const v of r.supportTypes) insertTag.run(r.id, 'supportType', v)
+    for (const v of r.accessModes) insertTag.run(r.id, 'accessMode', v)
+    if (r.routedProgramId) {
+      insertRoute.run(
+        r.id,
+        r.routedProgramId,
+        r.assignedOrgId,
+        r.routedOrgName,
+        r.routedProgramName,
+        r.supportTypes[0] || null,
+        r.routedAt
+      )
+    }
+  }
+  return rows.length
+}
+
+function seedIntakeVolume() {
   const insert = db.prepare('INSERT INTO intake_volume_weeks (week, count) VALUES (?, ?)')
-  db.transaction(() => {
-    for (const r of INTAKE_VOLUME_DEFAULT) insert.run(r.week, r.count)
-  })()
-  console.log(`  ✓ ${INTAKE_VOLUME_DEFAULT.length} weeks inserted`)
-  seeded++
-} else {
-  console.log(`  – Intake volume already seeded (${existingVolume} rows), skipping`)
+  const rows = intakeVolumeWeeks()
+  for (const r of rows) insert.run(r.week, r.count)
+  return rows.length
 }
 
-if (existingMetrics === 0) {
-  console.log('Seeding program metrics…')
+function seedProgramMetrics() {
   const insertMetric = db.prepare(`
     INSERT INTO program_metrics
       (program_id, gender, avg_wait_days, completion_rate, total_clients, total_capacity,
@@ -182,29 +276,106 @@ if (existingMetrics === 0) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
   const insertAge = db.prepare(`
-    INSERT INTO program_metrics_age (program_id, gender, age_group, outcome_rate, clients)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO program_metrics_age (program_id, gender, age_group, positive_outcome, negative_outcome, clients)
+    VALUES (?, ?, ?, ?, ?, ?)
   `)
-  db.transaction(() => {
-    for (const prog of PROGRAMS) {
-      for (const gender of GENDERS) {
-        const d = mockProgramData(prog.id, prog.targetGroups, gender)
-        insertMetric.run(
-          prog.id, gender, d.avg_wait_days, d.completion_rate, d.total_clients,
-          d.total_capacity, d.current_clients, d.available_pct, d.waitlist_depth, d.has_capacity
+
+  const bandedPrograms = [...PROGRAMS]
+    .sort((a, b) => rng(programSeed(a.id), 99) - rng(programSeed(b.id), 99))
+    .map((program, i, rows) => {
+      const availableEnd = Math.round(rows.length * 0.55)
+      const atCapacityEnd = availableEnd + Math.round(rows.length * 0.30)
+      const atCapacityCount = atCapacityEnd - availableEnd
+      const overCapacityCount = rows.length - atCapacityEnd
+      let capacityBand = 'overCapacity'
+      let hasProgramWaitlist = (i - atCapacityEnd) < Math.round(overCapacityCount * 0.80)
+      if (i < availableEnd) capacityBand = 'available'
+      else if (i < atCapacityEnd) {
+        capacityBand = 'atCapacity'
+        hasProgramWaitlist = (i - availableEnd) < Math.round(atCapacityCount * 0.25)
+      }
+      return { program, capacityBand, hasProgramWaitlist }
+    })
+
+  for (const { program, capacityBand, hasProgramWaitlist } of bandedPrograms) {
+    for (const gender of GENDERS) {
+      const d = buildProgramMetricSeed(program, gender, capacityBand, hasProgramWaitlist)
+      insertMetric.run(
+        program.id,
+        gender,
+        d.avg_wait_days,
+        d.completion_rate,
+        d.total_clients,
+        d.total_capacity,
+        d.current_clients,
+        d.available_pct,
+        d.waitlist_depth,
+        d.has_capacity
+      )
+      for (let i = 0; i < AGE_GROUPS.length; i++) {
+        insertAge.run(
+          program.id,
+          gender,
+          AGE_GROUPS[i],
+          d.outcomesByAge[i].positive,
+          d.outcomesByAge[i].negative,
+          d.demographicSplit[i]
         )
-        for (let i = 0; i < AGE_GROUPS.length; i++) {
-          insertAge.run(prog.id, gender, AGE_GROUPS[i], d.outcomesByAge[i], d.demographicSplit[i])
-        }
       }
     }
-  })()
-  const rows = PROGRAMS.length * GENDERS.length
-  console.log(`  ✓ ${rows} program×gender metrics inserted`)
-  seeded++
-} else {
-  console.log(`  – Program metrics already seeded (${existingMetrics} rows), skipping`)
+  }
+  return PROGRAMS.length * GENDERS.length
 }
 
-console.log(seeded > 0 ? '\nSeed complete.' : '\nNothing to seed — DB already populated.')
-db.close()
+function refreshMockData() {
+  return db.transaction(() => {
+    db.prepare('DELETE FROM intake_tags').run()
+    db.prepare('DELETE FROM intake_routes').run()
+    db.prepare('DELETE FROM intakes').run()
+    db.prepare('DELETE FROM intake_volume_weeks').run()
+    db.prepare('DELETE FROM program_metrics_age').run()
+    db.prepare('DELETE FROM program_metrics').run()
+
+    return {
+      intakes: seedIntakes(),
+      intakeVolumeWeeks: seedIntakeVolume(),
+      programMetrics: seedProgramMetrics(),
+      refreshedAt: new Date().toISOString(),
+    }
+  })()
+}
+
+function seedMockData({ forceMetrics = false } = {}) {
+  const result = { intakes: 0, intakeVolumeWeeks: 0, programMetrics: 0 }
+
+  if (forceMetrics) {
+    db.prepare('DELETE FROM program_metrics_age').run()
+    db.prepare('DELETE FROM program_metrics').run()
+  }
+
+  if (db.prepare('SELECT COUNT(*) as n FROM intakes').get().n === 0) {
+    result.intakes = db.transaction(seedIntakes)()
+  }
+  if (db.prepare('SELECT COUNT(*) as n FROM intake_volume_weeks').get().n === 0) {
+    result.intakeVolumeWeeks = db.transaction(seedIntakeVolume)()
+  }
+  if (db.prepare('SELECT COUNT(*) as n FROM program_metrics').get().n === 0) {
+    result.programMetrics = db.transaction(seedProgramMetrics)()
+  }
+
+  return result
+}
+
+if (require.main === module) {
+  const refresh = process.argv.includes('--refresh')
+  const forceMetrics = process.argv.includes('--force')
+  const result = refresh ? refreshMockData() : seedMockData({ forceMetrics })
+  console.log(JSON.stringify(result, null, 2))
+  db.close()
+}
+
+module.exports = {
+  dateOnlyDaysAgo,
+  refreshMockData,
+  seedMockData,
+}

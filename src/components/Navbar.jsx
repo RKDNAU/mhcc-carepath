@@ -27,7 +27,6 @@ const NAV_ITEMS = [
     items: [
       { label: 'Self-Help Guides',    desc: 'Tools and techniques for everyday wellbeing' },
       { label: 'Crisis Helplines',    desc: 'Immediate phone and online support' },
-      { label: 'Services Directory',  desc: 'Browse all Canberra services',              action: 'browse' },
       { label: 'FAQ',                 desc: 'Common questions answered' },
     ],
   },
@@ -49,7 +48,7 @@ const NAV_ITEMS = [
   },
 ]
 
-function DropdownMenu({ items, isOpen, onNavigate, onBrowse }) {
+function DropdownMenu({ items, isOpen, onNavigate }) {
   if (!isOpen) return null
   return (
     <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 w-72 z-50">
@@ -59,7 +58,6 @@ function DropdownMenu({ items, isOpen, onNavigate, onBrowse }) {
             key={item.label}
             onClick={() => {
               if (item.nav) onNavigate(item.nav)
-              else if (item.action === 'browse') onBrowse()
             }}
             className="w-full text-left px-4 py-3 hover:bg-brand-50 transition-colors group"
           >
@@ -74,7 +72,7 @@ function DropdownMenu({ items, isOpen, onNavigate, onBrowse }) {
   )
 }
 
-export default function Navbar({ onSeekSupport, onBrowse, onProviderLogin, onNavigate }) {
+export default function Navbar({ onSeekSupport, onProviderLogin, onNavigate }) {
   const [openMenu, setOpenMenu] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const navRef = useRef(null)
@@ -131,7 +129,6 @@ export default function Navbar({ onSeekSupport, onBrowse, onProviderLogin, onNav
                   items={nav.items}
                   isOpen={openMenu === nav.label}
                   onNavigate={onNavigate}
-                  onBrowse={onBrowse}
                 />
               </div>
             ))}
@@ -155,8 +152,7 @@ export default function Navbar({ onSeekSupport, onBrowse, onProviderLogin, onNav
             </button>
             <button
               onClick={onSeekSupport}
-              className="inline-flex items-center gap-2 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:brightness-90"
-              style={{ backgroundColor: '#c8336d' }}
+              className="inline-flex items-center gap-2 bg-highlight text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:brightness-90"
             >
               Seek support
             </button>
@@ -191,7 +187,6 @@ export default function Navbar({ onSeekSupport, onBrowse, onProviderLogin, onNav
                         onClick={() => {
                           setMobileOpen(false)
                           if (item.nav) onNavigate(item.nav)
-                          else if (item.action === 'browse') onBrowse()
                         }}
                         className="block w-full text-left px-3 py-2 text-sm text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors"
                       >
@@ -203,12 +198,10 @@ export default function Navbar({ onSeekSupport, onBrowse, onProviderLogin, onNav
               </div>
             ))}
             <div className="pt-4 border-t border-slate-100 mt-2 flex flex-col gap-2">
-              <button onClick={onBrowse} className="btn-outline w-full justify-center text-sm">Browse services</button>
               <button onClick={onProviderLogin} className="text-sm font-medium text-slate-600 py-2 hover:text-brand-700">Provider login</button>
               <button
                 onClick={onSeekSupport}
-                className="w-full inline-flex justify-center items-center gap-2 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all hover:brightness-90"
-                style={{ backgroundColor: '#c8336d' }}
+                className="w-full inline-flex justify-center items-center gap-2 bg-highlight text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all hover:brightness-90"
               >
                 Seek support
               </button>

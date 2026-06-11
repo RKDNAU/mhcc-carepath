@@ -1,21 +1,38 @@
-const ADMIN = {
-  name: 'Lisa McPherson',
-  orgRole: 'Chief Executive Officer',
-  carePathRole: 'Org Admin',
-}
+import { useState } from 'react'
+import { avatarSrc, isAvatarFailed, isAvatarLoaded, markAvatarFailed, markAvatarLoaded } from '../utils/avatarPreload'
 
 const initials = name =>
-  name.split(' ').map(p => p[0].toUpperCase()).join('')
+  name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
 
 function Avatar({ name, highlight }) {
+  const [imgLoaded, setImgLoaded] = useState(() => isAvatarLoaded(name))
+  const [imgError, setImgError] = useState(() => isAvatarFailed(name))
+  const src = avatarSrc(name)
+
   return (
     <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 border ${
-        highlight ? 'text-highlight' : 'bg-slate-100 border-slate-200 text-slate-600'
+      className={`relative w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden border ${
+        highlight ? 'text-highlight bg-highlight/10 border-highlight/20' : 'bg-slate-100 border-slate-200 text-slate-600'
       }`}
-      style={highlight ? { backgroundColor: 'rgba(200,51,109,0.1)', borderColor: 'rgba(200,51,109,0.2)' } : {}}
     >
       {initials(name)}
+      {!imgError && (
+      <img
+        src={src}
+        alt=""
+        onLoad={() => {
+          markAvatarLoaded(name)
+          setImgLoaded(true)
+        }}
+        onError={() => {
+          markAvatarFailed(name)
+          setImgError(true)
+        }}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ${
+          imgLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      )}
     </div>
   )
 }
@@ -38,9 +55,8 @@ function PersonRow({ name, orgRole, carePathRole, isCurrentUser }) {
       </div>
       <span
         className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 border ${
-          isAdmin ? 'text-highlight' : 'bg-slate-100 text-slate-500 border-slate-200'
+          isAdmin ? 'text-highlight bg-highlight/10 border-highlight/20' : 'bg-slate-100 text-slate-500 border-slate-200'
         }`}
-        style={isAdmin ? { backgroundColor: 'rgba(200,51,109,0.1)', borderColor: 'rgba(200,51,109,0.2)' } : {}}
       >
         {carePathRole}
       </span>
@@ -48,11 +64,10 @@ function PersonRow({ name, orgRole, carePathRole, isCurrentUser }) {
   )
 }
 
-export default function TeamMembers({ user }) {
+export default function TeamMembers({ user, provider }) {
   const members = [
     { name: user.username, orgRole: null, carePathRole: 'Member', isCurrentUser: true },
-    { name: 'Katarina Baloska', orgRole: 'Compliance Manager', carePathRole: 'Member' },
-    { name: 'Adrian Sturt', orgRole: 'Chief Operating Officer', carePathRole: 'Member' },
+    ...provider.members,
   ]
 
   return (
@@ -66,9 +81,9 @@ export default function TeamMembers({ user }) {
           </p>
         </div>
         <PersonRow
-          name={ADMIN.name}
-          orgRole={ADMIN.orgRole}
-          carePathRole={ADMIN.carePathRole}
+          name={provider.admin.name}
+          orgRole={provider.admin.orgRole}
+          carePathRole={provider.admin.carePathRole}
         />
       </div>
 

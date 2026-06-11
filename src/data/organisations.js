@@ -1,4 +1,5 @@
 export const ORGANISATIONS = [
+  { id: 'DEMO_GP', name: 'Greener Pastures', url: '', demoOnly: true },
   { id: 'ORG001', name: 'A Gender Agenda', url: 'https://genderrights.org.au/' },
   { id: 'ORG002', name: 'ACT Council of Social Service (ACTCOSS)', url: 'https://actcoss.org.au/' },
   { id: 'ORG003', name: 'ACT Mental Health Consumer Network (ACT MHCN)', url: 'https://www.actmhcn.org.au/' },

@@ -1,66 +1,8 @@
 'use strict'
-// Minimal program metadata for server-side use (CJS mirror of src/data/programs.js id/orgId/orgName/name fields)
-const PROGRAMS = [
-  { id: 'PRG0010', orgId: 'ORG003', orgName: 'ACT Mental Health Consumer Network (ACT MHCN)', name: 'Representation & Systemic Advocacy' },
-  { id: 'PRG0084', orgId: 'ORG015', orgName: 'Capital Health Network (CHN)', name: 'Targeted Regional Initiatives for Suicide Prevention' },
-  { id: 'PRG0087', orgId: 'ORG015', orgName: 'Capital Health Network (CHN)', name: 'Next Step Mental Health Coaching' },
-  { id: 'PRG0088', orgId: 'ORG015', orgName: 'Capital Health Network (CHN)', name: 'Well Connect ACT Psychosocial Support Services' },
-  { id: 'PRG0089', orgId: 'ORG015', orgName: 'Capital Health Network (CHN)', name: 'Alongside (Commonwealth Psychosocial Support Services)' },
-  { id: 'PRG0150', orgId: 'ORG018', orgName: 'Carers ACT', name: 'Mental Health Carer Navigator' },
-  { id: 'PRG0170', orgId: 'ORG021', orgName: 'Empower Living', name: 'Mental Health First Aid (MHFA) Training' },
-  { id: 'PRG0186', orgId: 'ORG024', orgName: 'Grand Pacific Health', name: 'Mental Health Direct' },
-  { id: 'PRG0190', orgId: 'ORG025', orgName: 'I Got You', name: 'Sharing Our Lived Experience (talks/workplace visits)' },
-  { id: 'PRG0191', orgId: 'ORG025', orgName: 'I Got You', name: 'ASIST -Applied Suicide Intervention Skills Training' },
-  { id: 'PRG0197', orgId: 'ORG026', orgName: 'Kintsugi Holistic Health', name: 'GP Mental Health / Eating Disorders Treatment Plan' },
-  { id: 'PRG0220', orgId: 'ORG029', orgName: 'Marymead CatholicCare Canberra & Goulburn', name: 'Next Step -Low Intensity Therapy (coaching)' },
-  { id: 'PRG0222', orgId: 'ORG029', orgName: 'Marymead CatholicCare Canberra & Goulburn', name: 'Next Step -Cool Little Kids (3–6) Anxiety Group' },
-  { id: 'PRG0223', orgId: 'ORG029', orgName: 'Marymead CatholicCare Canberra & Goulburn', name: 'Next Step -Cool Kids (7–12) Anxiety Group' },
-  { id: 'PRG0224', orgId: 'ORG029', orgName: 'Marymead CatholicCare Canberra & Goulburn', name: 'Better Access -Bulk Billing Counselling Service' },
-  { id: 'PRG0232', orgId: 'ORG030', orgName: 'Menslink', name: 'Menslink Unplugged (school education program)' },
-  { id: 'PRG0234', orgId: 'ORG030', orgName: 'Menslink', name: 'Menslink in Organisations (presentations/talks)' },
-  { id: 'PRG0242', orgId: 'ORG032', orgName: 'Mental Illness Education ACT (MIEACT)', name: 'Mental Health Education Programs (workshops and courses)' },
-  { id: 'PRG0244', orgId: 'ORG032', orgName: 'Mental Illness Education ACT (MIEACT)', name: 'Workplace and Organisational Training' },
-  { id: 'PRG0247', orgId: 'ORG033', orgName: 'Meridian', name: 'Clinical Care Coordinator (service planning and navigation)' },
-  { id: 'PRG0254', orgId: 'ORG034', orgName: 'Nexus Human Services', name: 'Psychosocial Recovery Coaching' },
-  { id: 'PRG0258', orgId: 'ORG035', orgName: 'Perinatal Wellbeing Centre', name: 'Perinatal Counselling (pregnancy and postnatal)' },
-  { id: 'PRG0261', orgId: 'ORG035', orgName: 'Perinatal Wellbeing Centre', name: 'Community and Professional Education (training)' },
-  { id: 'PRG0270', orgId: 'ORG038', orgName: 'REC Health Services', name: 'Psychosocial Recovery Coaching' },
-  { id: 'PRG0284', orgId: 'ORG040', orgName: 'Richmond Fellowship ACT', name: 'NDIS Support Coordination' },
-  { id: 'PRG0285', orgId: 'ORG040', orgName: 'Richmond Fellowship ACT', name: 'NDIS Recovery Coaching' },
-  { id: 'PRG0286', orgId: 'ORG040', orgName: 'Richmond Fellowship ACT', name: 'NDIS Peer Mentoring' },
-  { id: 'PRG0291', orgId: 'ORG042', orgName: "SiTara's Story", name: 'Women Talk Shops' },
-  { id: 'PRG0293', orgId: 'ORG042', orgName: "SiTara's Story", name: 'Breaking the Barrier (intergenerational conversations)' },
-  { id: 'PRG0294', orgId: 'ORG042', orgName: "SiTara's Story", name: 'Creative Writing Competitions (mental health awareness)' },
-  { id: 'PRG0295', orgId: 'ORG042', orgName: "SiTara's Story", name: 'Cooking Workshops (mental health awareness)' },
-  { id: 'PRG0296', orgId: 'ORG042', orgName: "SiTara's Story", name: '"Have you just arrived in Canberra?" (migrant support database)' },
-  { id: 'PRG0302', orgId: 'ORG044', orgName: 'Stride', name: 'Step Up Step Down Garran (SCSUSD)' },
-  { id: 'PRG0306', orgId: 'ORG045', orgName: 'Think Mental Health', name: 'General Practice (private practice)' },
-  { id: 'PRG0309', orgId: 'ORG045', orgName: 'Think Mental Health', name: 'Canberra and Tuggeranong Medicare Mental Health Centres' },
-  { id: 'PRG0310', orgId: 'ORG045', orgName: 'Think Mental Health', name: 'Medicare Mental Health Phone Service' },
-  { id: 'PRG0323', orgId: 'ORG046', orgName: 'Toora Women', name: 'Mental Health & Wellbeing Counselling (up to 12 weeks)' },
-  { id: 'PRG0324', orgId: 'ORG046', orgName: 'Toora Women', name: 'Mental Health & Wellbeing Group Programs (COS-P, Healing Trauma, DBT)' },
-  { id: 'PRG0352', orgId: 'ORG051', orgName: 'Wesley Mission', name: 'Wesley LifeForce Suicide Prevention Networks' },
-  { id: 'PRG0362', orgId: 'ORG052', orgName: 'Woden Community Service', name: 'Commonwealth Psychosocial Support Program -New Path' },
-  { id: 'PRG0363', orgId: 'ORG052', orgName: 'Woden Community Service', name: 'Commonwealth Psychosocial Support Program -Continuity of Support' },
-  { id: 'PRG0364', orgId: 'ORG052', orgName: 'Woden Community Service', name: 'Commonwealth Psychosocial Support Program -NDIS Access Support' },
-  { id: 'PRG0370', orgId: 'ORG052', orgName: 'Woden Community Service', name: 'The Way Back Support Service' },
-  { id: 'PRG0388', orgId: 'ORG053', orgName: "Women's Health Matters", name: 'Health in My Language -Bilingual Health Education' },
-  { id: 'PRG0410', orgId: 'ORG056', orgName: 'Canberra Community Law', name: 'Mental Health Justice Clinic' },
-  { id: 'PRG0413', orgId: 'ORG058', orgName: 'Directions Health Services', name: 'Alongside' },
-  { id: 'PRG0414', orgId: 'ORG066', orgName: "Health Care Consumers' Association", name: 'Take Action! Mental Health Complaints and Feedback in the ACT' },
-  { id: 'PRG0415', orgId: 'ORG059', orgName: 'Justice Action', name: 'Mental Health and Court Support' },
-  { id: 'PRG0416', orgId: 'ORG060', orgName: 'Mental Health Community Coalition ACT', name: 'Connecting with People Training Program' },
-  { id: 'PRG0417', orgId: 'ORG060', orgName: 'Mental Health Community Coalition ACT', name: 'ACT Alcohol, Tobacco and Other Drugs – Mental Health Alliance' },
-  { id: 'PRG0418', orgId: 'ORG060', orgName: 'Mental Health Community Coalition ACT', name: 'Perinatal Mental Health Alliance' },
-  { id: 'PRG0419', orgId: 'ORG060', orgName: 'Mental Health Community Coalition ACT', name: 'Mental Health Week ACT' },
-  { id: 'PRG0420', orgId: 'ORG061', orgName: 'Multicultural Hub Canberra', name: 'Multicultural Counselling Service' },
-  { id: 'PRG0426', orgId: 'ORG063', orgName: 'The Benevolent Society', name: 'Peer Support and Group Programs' },
-  { id: 'PRG0427', orgId: 'ORG064', orgName: 'UCA Canberra Region Presbytery', name: 'Mental Health Matters (training course)' },
-  { id: 'PRG0428', orgId: 'ORG065', orgName: 'Australian Red Cross – ACT/SE NSW', name: 'MATES (befriending program)' },
-]
 
-// Map keyed by program id for O(1) lookup
+const PROGRAMS = require('../src/data/programs.json')
 const PROGRAMS_MAP = {}
+
 for (const p of PROGRAMS) PROGRAMS_MAP[p.id] = p
 
 module.exports = { PROGRAMS, PROGRAMS_MAP }

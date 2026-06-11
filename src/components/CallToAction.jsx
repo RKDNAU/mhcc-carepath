@@ -14,8 +14,7 @@ export default function CallToAction({ onSeekSupport }) {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={onSeekSupport}
-            className="group inline-flex items-center justify-center gap-3 bg-white hover:bg-brand-50 font-bold text-base px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-0.5"
-          style={{ color: '#c8336d' }}
+            className="group inline-flex items-center justify-center gap-3 bg-white hover:bg-brand-50 text-highlight font-bold text-base px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-0.5"
           >
             Submit your intake form
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-200" />

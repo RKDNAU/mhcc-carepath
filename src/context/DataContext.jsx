@@ -70,6 +70,31 @@ export function DataProvider({ children }) {
     return updated
   }
 
+  async function routeCarePlan(intakeId, planItems) {
+    const routes = planItems.flatMap(item => {
+      const supportTypes = item.supportTypes?.length ? item.supportTypes : [item.supportType]
+      return supportTypes.map(supportType => ({
+        programId: item.program.id,
+        orgId: item.program.orgId,
+        orgName: item.program.orgName,
+        programName: item.program.name,
+        supportType,
+      }))
+    })
+    const serverResponse = await apiPatch(`/intakes/${intakeId}`, {
+      routes,
+    })
+    const updated = {
+      ...serverResponse,
+      status: 'routed',
+      routedPrograms: serverResponse.routedPrograms?.length
+        ? serverResponse.routedPrograms
+        : routes.map(route => ({ ...route, routedAt: new Date().toISOString() })),
+    }
+    setIntakeQueue(prev => prev.map(i => i.id === intakeId ? updated : i))
+    return updated
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm">
@@ -85,6 +110,7 @@ export function DataProvider({ children }) {
       memberSharedData,
       submitIntake,
       routeIntake,
+      routeCarePlan,
       refresh,
     }}>
       {children}

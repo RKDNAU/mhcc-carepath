@@ -3,7 +3,7 @@ import { X, Lock, User } from 'lucide-react'
 import carePath from '/img/CarePath.png'
 
 export default function ProviderLogin({ onLogin, onClose }) {
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState('Inga Matthews')
   const [password, setPassword] = useState('')
 
   const handleSubmit = (e) => {

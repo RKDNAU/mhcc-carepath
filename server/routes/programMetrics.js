@@ -38,7 +38,11 @@ router.get('/', (_req, res) => {
       availablePct:    m.available_pct,
       waitlistDepth:   m.waitlist_depth,
       hasCapacity:     !!m.has_capacity,
-      outcomesByAge:   AGE_GROUPS.map(label => ({ label, value: byGroup[label]?.outcome_rate ?? 0 })),
+      outcomesByAge:   AGE_GROUPS.map(label => ({
+        label,
+        positive:  byGroup[label]?.positive_outcome ?? 0,
+        negative: -(byGroup[label]?.negative_outcome ?? 0),
+      })),
       demographicSplit: AGE_GROUPS.map(label => ({ label, value: byGroup[label]?.clients ?? 0 })),
     }
   })

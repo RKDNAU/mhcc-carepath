@@ -1,26 +1,51 @@
-import { useState } from 'react'
-import { Inbox, BarChart2, Building2, Users, Settings, LogOut } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Inbox, ClipboardList, BarChart2, PieChart, Building2, Users, Settings, LogOut, Search } from 'lucide-react'
 import carePath from '/img/CarePath.png'
 import SharedIntake from './SharedIntake'
+import IntakeData from './IntakeData'
+import ProgramData from './ProgramData'
 import SharedData from './SharedData'
 import MyOrganisation from './MyOrganisation'
 import TeamMembers from './TeamMembers'
 import ProviderSettings from './ProviderSettings'
+import ServicesDirectory from './ServicesDirectory'
+import { DEMO_PROVIDER } from '../data/demoProvider'
+import { avatarSrc, isAvatarFailed, isAvatarLoaded, markAvatarFailed, markAvatarLoaded, preloadAvatars } from '../utils/avatarPreload'
 
 const NAV_ITEMS = [
-  { id: 'intake',   label: 'Shared Intake',   icon: Inbox      },
-  { id: 'data',     label: 'Shared Data',     icon: BarChart2  },
-  { id: 'org',      label: 'My Organisation', icon: Building2  },
-  { id: 'team',     label: 'Team Members',    icon: Users      },
-  { id: 'settings', label: 'Settings',        icon: Settings   },
+  { id: 'intake',        label: 'Shared Intake',   icon: Inbox         },
+  { id: 'intake-data',   label: 'Intake Data',     icon: ClipboardList },
+  { id: 'program-data',  label: 'Program Data',    icon: BarChart2     },
+  { id: 'sector-data',   label: 'Sector Data',     icon: PieChart      },
+  { id: 'org',           label: 'My Organisation', icon: Building2     },
+  { id: 'team',          label: 'Team Members',    icon: Users         },
+  { id: 'services',      label: 'Services Discovery', icon: Search     },
+  { id: 'settings',      label: 'Settings',        icon: Settings      },
 ]
 
-const ORG_NAME = 'Nexus Human Services'
+const initials = name =>
+  name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
 
 export default function ProviderLayout({ user, onLogout }) {
   const [activeNav, setActiveNav] = useState('intake')
+  const [avatarLoaded, setAvatarLoaded] = useState(() => isAvatarLoaded(user.username))
+  const [avatarError, setAvatarError] = useState(() => isAvatarFailed(user.username))
 
   const activeItem = NAV_ITEMS.find(n => n.id === activeNav)
+  const avatarNames = useMemo(() => [
+    user.username,
+    DEMO_PROVIDER.admin.name,
+    ...DEMO_PROVIDER.members.map(member => member.name),
+  ], [user.username])
+
+  useEffect(() => {
+    setAvatarLoaded(isAvatarLoaded(user.username))
+    setAvatarError(isAvatarFailed(user.username))
+    preloadAvatars(avatarNames).then(() => {
+      setAvatarLoaded(isAvatarLoaded(user.username))
+      setAvatarError(isAvatarFailed(user.username))
+    })
+  }, [avatarNames])
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
@@ -61,11 +86,11 @@ export default function ProviderLayout({ user, onLogout }) {
           <div className="px-3 py-2.5 bg-slate-50 rounded-xl space-y-2">
             <div>
               <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Organisation</p>
-              <p className="text-xs font-semibold text-slate-800 mt-0.5 leading-snug">{ORG_NAME}</p>
+              <p className="text-xs font-semibold text-slate-800 mt-0.5 leading-snug">{DEMO_PROVIDER.orgName}</p>
             </div>
             <div>
               <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Role</p>
-              <p className="text-xs font-semibold text-slate-800 mt-0.5 leading-snug">Member</p>
+              <p className="text-xs font-semibold text-slate-800 mt-0.5 leading-snug">{DEMO_PROVIDER.role}</p>
             </div>
           </div>
           <button
@@ -85,21 +110,40 @@ export default function ProviderLayout({ user, onLogout }) {
         <header className="h-14 bg-white border-b border-slate-100 flex items-center justify-between px-6 flex-shrink-0 shadow-sm">
           <h1 className="text-base font-semibold text-slate-900">{activeItem?.label}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-400 hidden sm:block">{ORG_NAME}</span>
-            <div className="w-8 h-8 rounded-full border flex items-center justify-center text-highlight font-bold text-sm flex-shrink-0" style={{ backgroundColor: 'rgba(200,51,109,0.1)', borderColor: 'rgba(200,51,109,0.2)' }}>
-              {user.username[0].toUpperCase()}
+            <span className="text-sm text-slate-400 hidden sm:block">{DEMO_PROVIDER.orgName}</span>
+            <div className="relative w-8 h-8 rounded-full border border-highlight/20 bg-highlight/10 flex items-center justify-center text-highlight font-bold text-xs flex-shrink-0 overflow-hidden">
+              {initials(user.username)}
+              {!avatarError && (
+              <img
+                src={avatarSrc(user.username)}
+                alt=""
+                onLoad={() => {
+                  markAvatarLoaded(user.username)
+                  setAvatarLoaded(true)
+                }}
+                onError={() => {
+                  markAvatarFailed(user.username)
+                  setAvatarError(true)
+                }}
+                className={`absolute inset-0 w-full h-full object-cover border-2 border-highlight/50 rounded-full transition-opacity duration-150 ${
+                  avatarLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+              )}
             </div>
-            <span className="text-sm font-medium text-slate-700 hidden sm:block">{user.username}</span>
           </div>
         </header>
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {activeNav === 'intake'   && <SharedIntake />}
-          {activeNav === 'data'     && <SharedData />}
-          {activeNav === 'org'      && <MyOrganisation />}
-          {activeNav === 'team'     && <TeamMembers user={user} />}
-          {activeNav === 'settings' && <ProviderSettings />}
+          {activeNav === 'intake'       && <SharedIntake />}
+          {activeNav === 'intake-data'  && <IntakeData />}
+          {activeNav === 'program-data' && <ProgramData orgId={DEMO_PROVIDER.orgId} orgName={DEMO_PROVIDER.orgName} />}
+          {activeNav === 'sector-data'  && <SharedData />}
+          {activeNav === 'org'          && <MyOrganisation provider={DEMO_PROVIDER} />}
+          {activeNav === 'team'         && <TeamMembers user={user} provider={DEMO_PROVIDER} />}
+          {activeNav === 'services'     && <ServicesDirectory embedded />}
+          {activeNav === 'settings'     && <ProviderSettings />}
         </div>
       </div>
     </div>

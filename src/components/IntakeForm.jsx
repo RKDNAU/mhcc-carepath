@@ -505,6 +505,8 @@ function SuccessScreen({ data, onClose }) {
 export default function IntakeForm({ onClose, onPrivacy }) {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState(INITIAL_FORM)
+  const [submitError, setSubmitError] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const TOTAL_STEPS = 3
 
   const update = (field, value) => setFormData(prev => ({ ...prev, [field]: value }))
@@ -524,12 +526,33 @@ export default function IntakeForm({ onClose, onPrivacy }) {
     return true
   }
 
-  const handleNext = () => {
+  const withOtherText = (values, otherText) => {
+    if (!values.includes('Other') || !otherText.trim()) return values
+    return values.map(value => value === 'Other' ? `Other: ${otherText.trim()}` : value)
+  }
+
+  const payloadFromForm = () => ({
+    ...formData,
+    seekerGroups: withOtherText(formData.seekerGroups, formData.seekerGroupOther),
+    supportTypes: withOtherText(formData.supportTypes, formData.supportTypeOther),
+    accessModes: withOtherText(formData.accessModes, formData.accessModeOther),
+  })
+
+  const handleNext = async () => {
     if (step < TOTAL_STEPS) {
       setStep(s => s + 1)
     } else {
-      apiPost('/intakes', formData).catch(err => console.error('Intake submit failed:', err))
-      setStep('success')
+      setSubmitError(null)
+      setIsSubmitting(true)
+      try {
+        await apiPost('/intakes', payloadFromForm())
+        setStep('success')
+      } catch (err) {
+        console.error('Intake submit failed:', err)
+        setSubmitError('We could not submit your intake. Please check your connection and try again.')
+      } finally {
+        setIsSubmitting(false)
+      }
     }
   }
 
@@ -560,6 +583,11 @@ export default function IntakeForm({ onClose, onPrivacy }) {
           {step === 2 && <Step2 data={formData} update={update} />}
           {step === 3 && <Step3 data={formData} update={update} onPrivacy={onPrivacy} />}
           {step === 'success' && <SuccessScreen data={formData} onClose={onClose} />}
+          {submitError && step !== 'success' && (
+            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {submitError}
+            </div>
+          )}
         </div>
 
         {/* Footer nav */}
@@ -576,10 +604,10 @@ export default function IntakeForm({ onClose, onPrivacy }) {
             <span className="text-xs text-slate-400">Step {step} of {TOTAL_STEPS}</span>
             <button
               onClick={handleNext}
-              disabled={!canAdvance()}
+              disabled={!canAdvance() || isSubmitting}
               className="inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all duration-200"
             >
-              {step === TOTAL_STEPS ? 'Submit' : 'Continue'}
+              {isSubmitting ? 'Submitting...' : step === TOTAL_STEPS ? 'Submit' : 'Continue'}
               <ChevronRight size={16} />
             </button>
           </div>

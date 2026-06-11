@@ -9,7 +9,6 @@ import ServicesGrid from './components/ServicesGrid'
 import CallToAction from './components/CallToAction'
 import Footer from './components/Footer'
 import IntakeForm from './components/IntakeForm'
-import ServicesDirectory from './components/ServicesDirectory'
 import PrivacyPolicy from './components/PrivacyPolicy'
 import ProviderLogin from './components/ProviderLogin'
 import ProviderLayout from './components/ProviderLayout'
@@ -17,10 +16,11 @@ import AboutCarePathPage from './components/AboutCarePathPage'
 import AboutMHCCPage from './components/AboutMHCCPage'
 import PartnerOrganisationsPage from './components/PartnerOrganisationsPage'
 import NewsUpdatesPage from './components/NewsUpdatesPage'
+import { DEMO_PROVIDER } from './data/demoProvider'
+import { preloadAvatars } from './utils/avatarPreload'
 
 export default function App() {
   const [showForm, setShowForm] = useState(false)
-  const [showDirectory, setShowDirectory] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showProviderLogin, setShowProviderLogin] = useState(false)
   const [providerUser, setProviderUser] = useState(null)
@@ -35,6 +35,12 @@ export default function App() {
     }
     link.type = 'image/png'
     link.href = carePathIcon
+
+    preloadAvatars([
+      'Inga Matthews',
+      DEMO_PROVIDER.admin.name,
+      ...DEMO_PROVIDER.members.map(member => member.name),
+    ])
   }, [])
 
   if (providerUser) {
@@ -52,14 +58,12 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans">
       <Navbar
         onSeekSupport={() => setShowForm(true)}
-        onBrowse={() => setShowDirectory(true)}
         onProviderLogin={() => setShowProviderLogin(true)}
         onNavigate={page => setCurrentPage(page)}
       />
       <main>
         <Hero
           onSeekSupport={() => setShowForm(true)}
-          onBrowse={() => setShowDirectory(true)}
         />
         <HowItWorks />
         <AboutMHCC />
@@ -74,7 +78,6 @@ export default function App() {
           onPrivacy={() => setShowPrivacy(true)}
         />
       )}
-      {showDirectory && <ServicesDirectory onClose={() => setShowDirectory(false)} />}
       {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
       {showProviderLogin && (
         <ProviderLogin

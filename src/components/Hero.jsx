@@ -1,4 +1,5 @@
 import { ArrowRight, BadgeCheck, Shield, Users } from 'lucide-react'
+import { COLORS } from '../constants/theme'
 
 const TRUST_BADGES = [
   { icon: Shield, text: 'Confidential & safe' },
@@ -6,7 +7,7 @@ const TRUST_BADGES = [
   { icon: BadgeCheck, text: 'Free to use' },
 ]
 
-export default function Hero({ onSeekSupport, onBrowse }) {
+export default function Hero({ onSeekSupport }) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-white">
       {/* Background decoration */}
@@ -35,7 +36,12 @@ export default function Hero({ onSeekSupport, onBrowse }) {
           {/* Heading */}
           <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight tracking-tight mb-6">
             Support is{' '}
-            <span className="text-highlight">here</span>{' '}
+            <span
+              className="text-white"
+              style={{ WebkitTextStroke: `3px ${COLORS.highlight}`, paintOrder: 'stroke fill' }}
+            >
+              here
+            </span>{' '}
             for you
           </h1>
 
@@ -55,12 +61,6 @@ export default function Hero({ onSeekSupport, onBrowse }) {
                 size={20}
                 className="group-hover:translate-x-1 transition-transform duration-200"
               />
-            </button>
-            <button
-              onClick={onBrowse}
-              className="inline-flex items-center gap-2 text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/10 font-semibold text-base px-6 py-4 rounded-2xl transition-all duration-200"
-            >
-              Browse services
             </button>
           </div>
 
