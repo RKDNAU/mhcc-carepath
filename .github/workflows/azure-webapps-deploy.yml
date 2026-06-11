@@ -18,14 +18,13 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Install dependencies and build
+      - name: Build client
         run: |
           npm ci
           npm run build:client
-          npm ci --omit=dev
 
       - name: Create deployment zip
-        run: zip -r deploy.zip . --exclude ".git/*" --exclude "*.bat" --exclude "src/*"
+        run: zip -r deploy.zip . --exclude ".git/*" --exclude "*.bat" --exclude "src/*" --exclude "node_modules/*"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
