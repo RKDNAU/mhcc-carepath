@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useLayoutEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { X, Heart, Plus } from 'lucide-react'
 import { PROGRAMS } from '../data/programs'
 import { getTopMatchesWithScores } from './SharedIntake'
@@ -70,9 +70,7 @@ function listText(values, fallback) {
   return values?.length ? values.join(', ') : fallback
 }
 
-function MatchFitnessTooltip({ match, intake, visible, modalBodyRef }) {
-  const tooltipRef = useRef(null)
-  const [shiftY, setShiftY] = useState(0)
+function MatchFitnessTooltip({ match, intake, visible }) {
   const hasMatchedNeeds = match.matchedGroups.length || match.matchedTypes.length
   const hasGaps = match.unmatchedGroups.length || match.unmatchedTypes.length
   const programAccess = Array.isArray(match.program.accessModes)
@@ -90,23 +88,10 @@ function MatchFitnessTooltip({ match, intake, visible, modalBodyRef }) {
     ? 'No current waitlist.'
     : `Current waitlist of ${match.waitlistDepth}.`
 
-  useLayoutEffect(() => {
-    if (!visible || !tooltipRef.current || !modalBodyRef.current) return
-    const tooltipRect = tooltipRef.current.getBoundingClientRect()
-    const bodyRect = modalBodyRef.current.getBoundingClientRect()
-    const maxBottom = bodyRect.bottom - 20
-    const naturalBottom = tooltipRect.bottom - shiftY
-    setShiftY(Math.min(0, maxBottom - naturalBottom))
-  }, [visible, modalBodyRef, match.program.id, shiftY])
-
   if (!visible) return null
 
   return (
-    <div
-      ref={tooltipRef}
-      className="pointer-events-none absolute left-4 right-4 top-full z-30 mt-2"
-      style={{ transform: `translateY(${shiftY}px)` }}
-    >
+    <div className="pointer-events-none absolute left-4 right-4 top-full z-50 mt-2">
       <div className="rounded-xl border border-slate-200 bg-white/95 shadow-xl backdrop-blur px-3 py-3">
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Fitness Factors</p>
         <div className="space-y-2.5">
@@ -401,7 +386,6 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
                         match={m}
                         intake={intake}
                         visible={hoveredMatch === `single-${m.program.id}`}
-                        modalBodyRef={modalBodyRef}
                       />
                     </div>
                   )
@@ -471,7 +455,6 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
                           match={m}
                           intake={{ ...intake, supportTypes: activeTab.ignoreSupportTypes ? [] : [activeTab.supportType] }}
                           visible={hoveredMatch === `multi-${activeTab.id}-${m.program.id}`}
-                          modalBodyRef={modalBodyRef}
                         />
                       </div>
                     )
