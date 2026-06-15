@@ -18,30 +18,13 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Build and prepare deployment
+      - name: Build client
         run: |
           npm ci
           npm run build:client
-          npm prune --omit=dev
-
-      - name: Verify production node_modules
-        run: |
-          echo "=== Top-level packages after prune ==="
-          ls node_modules/
-          echo "=== express present ==="
-          ls node_modules/express/package.json && echo "YES" || echo "NO - MISSING"
-          echo "=== better-sqlite3 present ==="
-          ls node_modules/better-sqlite3/package.json && echo "YES" || echo "NO - MISSING"
 
       - name: Create deployment zip
-        run: zip -r deploy.zip . --exclude ".git/*" --exclude "*.bat" --exclude "src/*"
-
-      - name: Verify zip contents
-        run: |
-          echo "=== express in zip ==="
-          unzip -l deploy.zip | grep "node_modules/express/package.json" || echo "MISSING FROM ZIP"
-          echo "=== zip size ==="
-          ls -lh deploy.zip
+        run: zip -r deploy.zip . --exclude ".git/*" --exclude "*.bat" --exclude "src/*" --exclude "node_modules/*"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
