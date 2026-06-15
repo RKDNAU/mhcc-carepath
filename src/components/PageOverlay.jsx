@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import carePath from '/img/CarePath.png'
+const carePath = '/img/CarePath.png'
 
 export default function PageOverlay({ title, subtitle, onClose, children, maxWidth = 'max-w-4xl' }) {
   return (

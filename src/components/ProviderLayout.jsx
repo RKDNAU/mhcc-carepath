@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Inbox, ClipboardList, BarChart2, PieChart, Building2, Users, Settings, LogOut, Search } from 'lucide-react'
-import carePath from '/img/CarePath.png'
+const carePath = '/img/CarePath.png'
 import SharedIntake from './SharedIntake'
 import IntakeData from './IntakeData'
 import ProgramData from './ProgramData'

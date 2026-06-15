@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Menu, X, Phone } from 'lucide-react'
-import carePath from '/img/CarePath.png'
+const carePath = '/img/CarePath.png'
 
 const NAV_ITEMS = [
   {

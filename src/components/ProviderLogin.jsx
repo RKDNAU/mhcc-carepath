@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Lock, User } from 'lucide-react'
-import carePath from '/img/CarePath.png'
+const carePath = '/img/CarePath.png'
 
 export default function ProviderLogin({ onLogin, onClose }) {
   const [username, setUsername] = useState('Inga Matthews')

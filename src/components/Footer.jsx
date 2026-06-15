@@ -1,5 +1,5 @@
 import { Heart, Phone, Mail, MapPin } from 'lucide-react'
-import carePath from '/img/CarePath.png'
+const carePath = '/img/CarePath.png'
 
 const PLATFORM_LINKS = ['About CarePath', 'How It Works', 'For Providers', 'Partner Organisations']
 const SERVICE_LINKS = ['Counselling & Therapy', 'Crisis Support', 'Support Groups', 'Youth Services']
