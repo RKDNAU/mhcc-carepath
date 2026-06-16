@@ -6,11 +6,11 @@ import {
   HeartHandshake,
   Pill,
   LucideHeart,
-  BookOpen,
+  Salad,
 } from 'lucide-react'
 import { SERVICE_OVERVIEWS } from '../data/serviceOverviews'
 
-const SERVICE_META = {
+export const SERVICE_META = {
   'anxiety-depression': {
     icon: Brain,
     desc: 'Counselling, coaching, and wellbeing supports for anxiety, depression, and everyday stress.',
@@ -47,7 +47,7 @@ const SERVICE_META = {
     color: 'bg-teal-50 text-teal-600 border-teal-100',
   },
   'eating-disorders': {
-    icon: BookOpen,
+    icon: Salad,
     desc: 'Help finding care planning, referral pathways, and recovery support.',
     color: 'bg-green-50 text-green-600 border-green-100',
   },

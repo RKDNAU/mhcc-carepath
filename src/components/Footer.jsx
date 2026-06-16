@@ -1,12 +1,45 @@
 import { Heart, Phone, Mail, MapPin } from 'lucide-react'
+import { SERVICE_OVERVIEWS } from '../data/serviceOverviews'
 const carePath = '/img/CarePath.png'
 
-const PLATFORM_LINKS = ['About CarePath', 'How It Works', 'For Providers', 'Partner Organisations']
-const SERVICE_LINKS = ['Counselling & Therapy', 'Crisis Support', 'Support Groups', 'Youth Services']
-const RESOURCE_LINKS = ['Self-Help Guides', 'Crisis Helplines', 'FAQ']
-const LEGAL_LINKS = ['Terms of Use', 'Accessibility', 'Feedback']
+const PLATFORM_LINKS = [
+  { label: 'About CarePath', nav: 'about-carepath' },
+  { label: 'About MHCC ACT', nav: 'about-mhcc' },
+  { label: 'For Providers', nav: 'provider:join-network' },
+  { label: 'Partner Organisations', nav: 'partners' },
+  { label: 'News & Updates', nav: 'news' },
+]
 
-export default function Footer({ onPrivacyClick }) {
+const SERVICE_LINKS = SERVICE_OVERVIEWS.map(({ slug, title }) => ({
+  label: title,
+  nav: `service:${slug}`,
+}))
+
+const RESOURCE_LINKS = [
+  { label: 'Self-Help Guides', nav: 'resource:self-help' },
+  { label: 'Crisis Helplines', nav: 'resource:crisis-helplines' },
+  { label: 'FAQ', nav: 'resource:faq' },
+]
+
+const LEGAL_LINKS = [
+  { label: 'Terms of Use', action: 'terms' },
+  { label: 'Accessibility', nav: 'accessibility' },
+  { label: 'Feedback', href: 'https://mhccact.org.au/contact/' },
+]
+
+function handleFooterLink(link, { onNavigate, onTermsClick }) {
+  if (link.href) {
+    window.location.href = link.href
+    return
+  }
+  if (link.action === 'terms') {
+    onTermsClick()
+    return
+  }
+  if (link.nav) onNavigate(link.nav)
+}
+
+export default function Footer({ onNavigate, onPrivacyClick, onTermsClick }) {
   return (
     <footer className="bg-slate-900 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -63,8 +96,13 @@ export default function Footer({ onPrivacyClick }) {
               <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">{title}</h4>
               <ul className="space-y-2.5">
                 {links.map(link => (
-                  <li key={link}>
-                    <button className="text-sm hover:text-white transition-colors text-left">{link}</button>
+                  <li key={link.label}>
+                    <button
+                      onClick={() => handleFooterLink(link, { onNavigate, onTermsClick })}
+                      className="text-sm hover:text-white transition-colors text-left"
+                    >
+                      {link.label}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -83,8 +121,13 @@ export default function Footer({ onPrivacyClick }) {
                 </button>
               </li>
               {LEGAL_LINKS.map(link => (
-                <li key={link}>
-                  <button className="text-sm hover:text-white transition-colors text-left">{link}</button>
+                <li key={link.label}>
+                  <button
+                    onClick={() => handleFooterLink(link, { onNavigate, onTermsClick })}
+                    className="text-sm hover:text-white transition-colors text-left"
+                  >
+                    {link.label}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -95,7 +138,7 @@ export default function Footer({ onPrivacyClick }) {
           <p>© 2026 Mental Health Community Coalition of the ACT. All rights reserved.</p>
           <p>
             Built for our community, with{' '}
-            <Heart size={11} className="inline text-highlight" fill="currentColor" /> in Canberra.
+            <Heart size={11} className="inline text-highlight" fill="currentColor" /> in Canberra, by RKDN.
           </p>
         </div>
       </div>

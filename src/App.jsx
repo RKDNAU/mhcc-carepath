@@ -17,12 +17,16 @@ import AboutMHCCPage from './components/AboutMHCCPage'
 import PartnerOrganisationsPage from './components/PartnerOrganisationsPage'
 import NewsUpdatesPage from './components/NewsUpdatesPage'
 import ServiceOverviewPage from './components/ServiceOverviewPage'
+import { CrisisHelplinesPage, FAQPage, SelfHelpGuidesPage } from './components/ResourcePages'
+import ProviderInfoPage from './components/ProviderInfoPages'
+import { AccessibilityPage, TermsOfUseModal } from './components/LegalPages'
 import { DEMO_PROVIDER } from './data/demoProvider'
 import { preloadAvatars } from './utils/avatarPreload'
 
 export default function App() {
   const [showForm, setShowForm] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
   const [showProviderLogin, setShowProviderLogin] = useState(false)
   const [providerUser, setProviderUser] = useState(null)
   const [currentPage, setCurrentPage] = useState(null)
@@ -78,7 +82,11 @@ export default function App() {
         <ServicesGrid onOpenService={slug => setCurrentPage(`service:${slug}`)} />
         <CallToAction onSeekSupport={() => openIntakeForm()} />
       </main>
-      <Footer onPrivacyClick={() => setShowPrivacy(true)} />
+      <Footer
+        onNavigate={page => setCurrentPage(page)}
+        onPrivacyClick={() => setShowPrivacy(true)}
+        onTermsClick={() => setShowTerms(true)}
+      />
 
       {showForm && (
         <IntakeForm
@@ -88,6 +96,7 @@ export default function App() {
         />
       )}
       {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
+      {showTerms && <TermsOfUseModal onClose={() => setShowTerms(false)} />}
       {showProviderLogin && (
         <ProviderLogin
           onLogin={user => { setProviderUser(user); setShowProviderLogin(false) }}
@@ -100,6 +109,13 @@ export default function App() {
       {currentPage === 'about-mhcc'     && <AboutMHCCPage     onClose={() => setCurrentPage(null)} />}
       {currentPage === 'partners'        && <PartnerOrganisationsPage onClose={() => setCurrentPage(null)} />}
       {currentPage === 'news'            && <NewsUpdatesPage   onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'resource:self-help' && <SelfHelpGuidesPage onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'resource:crisis-helplines' && <CrisisHelplinesPage onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'resource:faq' && <FAQPage onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'accessibility' && <AccessibilityPage onClose={() => setCurrentPage(null)} />}
+      {currentPage?.startsWith('provider:') && (
+        <ProviderInfoPage page={currentPage} onClose={() => setCurrentPage(null)} />
+      )}
       {currentPage?.startsWith('service:') && (
         <ServiceOverviewPage
           slug={currentPage.replace('service:', '')}
