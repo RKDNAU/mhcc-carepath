@@ -8,59 +8,52 @@ import {
   LucideHeart,
   BookOpen,
 } from 'lucide-react'
+import { SERVICE_OVERVIEWS } from '../data/serviceOverviews'
 
-const SERVICES = [
-  {
+const SERVICE_META = {
+  'anxiety-depression': {
     icon: Brain,
-    title: 'Anxiety & Depression',
-    desc: 'Evidence-based counselling for anxiety, depression, and mood disorders.',
+    desc: 'Counselling, coaching, and wellbeing supports for anxiety, depression, and everyday stress.',
     color: 'bg-blue-50 text-blue-600 border-blue-100',
   },
-  {
+  'trauma-ptsd': {
     icon: Flame,
-    title: 'Trauma & PTSD',
-    desc: 'Specialist trauma-informed care in a safe, supportive environment.',
+    desc: 'Trauma-informed options focused on safety, stabilisation, and recovery.',
     color: 'bg-orange-50 text-orange-600 border-orange-100',
   },
-  {
+  'support-groups': {
     icon: Users,
-    title: 'Support Groups',
-    desc: 'Peer-led and facilitated groups to share experiences and build resilience.',
+    desc: 'Peer-led and facilitated groups to share experiences and build connection.',
     color: 'bg-purple-50 text-purple-600 border-purple-100',
   },
-  {
+  'youth-services': {
     icon: Baby,
-    title: 'Youth Services',
-    desc: 'Age-appropriate support for children, teens, and young adults.',
+    desc: 'Age-appropriate support for children, teenagers, young adults, and families.',
     color: 'bg-pink-50 text-pink-600 border-pink-100',
   },
-  {
+  'relationships-family': {
     icon: HeartHandshake,
-    title: 'Relationships & Family',
-    desc: 'Couples counselling, family therapy, and parenting support.',
+    desc: 'Support for families, carers, parenting, relationships, and household stress.',
     color: 'bg-rose-50 text-rose-600 border-rose-100',
   },
-  {
+  'substance-use': {
     icon: Pill,
-    title: 'Substance Use',
-    desc: 'Non-judgmental support for alcohol and drug-related challenges.',
+    desc: 'Non-judgemental support where mental health and substance use concerns overlap.',
     color: 'bg-amber-50 text-amber-600 border-amber-100',
   },
-  {
+  'aged-care-support': {
     icon: LucideHeart,
-    title: 'Aged Care Support',
-    desc: 'Mental wellness services designed for older Canberrans.',
+    desc: 'Mental wellness, navigation, and community support for older Canberrans.',
     color: 'bg-teal-50 text-teal-600 border-teal-100',
   },
-  {
+  'eating-disorders': {
     icon: BookOpen,
-    title: 'Eating Disorders',
-    desc: 'Specialist eating disorder treatment and recovery support.',
+    desc: 'Help finding care planning, referral pathways, and recovery support.',
     color: 'bg-green-50 text-green-600 border-green-100',
   },
-]
+}
 
-export default function ServicesGrid() {
+export default function ServicesGrid({ onOpenService }) {
   return (
     <section className="bg-white py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,9 +67,12 @@ export default function ServicesGrid() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {SERVICES.map(({ icon: Icon, title, desc, color }) => (
+          {SERVICE_OVERVIEWS.map(({ slug, title }) => {
+            const { icon: Icon, desc, color } = SERVICE_META[slug]
+            return (
             <button
               key={title}
+              onClick={() => onOpenService(slug)}
               className="group text-left p-6 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-md hover:-translate-y-1 transition-all duration-200"
             >
               <div className={`w-11 h-11 rounded-xl border flex items-center justify-center mb-4 ${color}`}>
@@ -87,7 +83,8 @@ export default function ServicesGrid() {
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
             </button>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>

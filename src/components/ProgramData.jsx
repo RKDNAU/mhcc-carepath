@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   CartesianGrid, ResponsiveContainer, Cell, ReferenceLine,
@@ -122,7 +122,7 @@ function PositiveOutcomeCard({ base, selectedAge }) {
 }
 
 export default function ProgramData({ orgId, orgName }) {
-  const { memberSharedData } = useData()
+  const { memberSharedData, dataErrors } = useData()
   const controlledPrograms = useMemo(() => {
     const scoped = orgId ? PROGRAMS.filter(p => p.orgId === orgId) : PROGRAMS
     return scoped.length ? scoped : []
@@ -134,13 +134,18 @@ export default function ProgramData({ orgId, orgName }) {
   const [outcomeMode,    setOutcomeMode]    = useState('raw')
 
   const selectedProg = controlledPrograms.find(p => p.id === selectedId) || controlledPrograms[0] || PROGRAMS[0]
+  const activeProgramId = selectedProg.id
+
+  useEffect(() => {
+    if (selectedId !== activeProgramId) setSelectedId(activeProgramId)
+  }, [selectedId, activeProgramId])
 
   const base = useMemo(() => {
     if (!memberSharedData) return null
     return selectedGender === 'All'
-      ? aggregateAllGender(memberSharedData, selectedId)
-      : (memberSharedData[`${selectedId}_${selectedGender}`] || null)
-  }, [selectedId, selectedGender, memberSharedData])
+      ? aggregateAllGender(memberSharedData, activeProgramId)
+      : (memberSharedData[`${activeProgramId}_${selectedGender}`] || null)
+  }, [activeProgramId, selectedGender, memberSharedData])
 
   const scaledBase = useMemo(() => {
     if (!base) return null
@@ -188,8 +193,12 @@ export default function ProgramData({ orgId, orgName }) {
         </p>
         {!base ? (
           <p className="text-sm text-slate-400 py-4">
-            No program data available — run <code>npm run seed</code> to populate,
-            or <code>npm run seed -- --force</code> to reseed with updated age groups.
+            {dataErrors?.programMetrics ? (
+              'Program metrics could not be loaded. Check the API server and refresh this page.'
+            ) : (
+              <>No program data available - run <code>npm run seed</code> to populate,
+                or <code>npm run seed -- --force</code> to reseed with updated age groups.</>
+            )}
           </p>
         ) : <>
 

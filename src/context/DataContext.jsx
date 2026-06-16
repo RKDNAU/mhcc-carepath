@@ -7,6 +7,7 @@ export function DataProvider({ children }) {
   const [intakeQueue,     setIntakeQueue]     = useState([])
   const [intakeVolume,    setIntakeVolume]    = useState([])
   const [memberSharedData, setMemberSharedData] = useState(null)
+  const [dataErrors, setDataErrors] = useState({})
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -16,22 +17,45 @@ export function DataProvider({ children }) {
     let cancelled = false
     setLoading(true)
 
-    Promise.all([
+    Promise.allSettled([
       apiGet('/intakes'),
       apiGet('/intake-volume'),
       apiGet('/program-metrics'),
     ])
-      .then(([intakes, volume, metrics]) => {
+      .then(([intakesResult, volumeResult, metricsResult]) => {
         if (cancelled) return
-        setIntakeQueue(intakes)
-        setIntakeVolume(volume)
-        if (metrics.length > 0) {
+
+        const nextErrors = {}
+
+        if (intakesResult.status === 'fulfilled') {
+          setIntakeQueue(intakesResult.value)
+        } else {
+          console.error('DataContext intakes fetch error:', intakesResult.reason)
+          setIntakeQueue([])
+          nextErrors.intakes = intakesResult.reason
+        }
+
+        if (volumeResult.status === 'fulfilled') {
+          setIntakeVolume(volumeResult.value)
+        } else {
+          console.error('DataContext intake volume fetch error:', volumeResult.reason)
+          setIntakeVolume([])
+          nextErrors.intakeVolume = volumeResult.reason
+        }
+
+        if (metricsResult.status === 'fulfilled' && metricsResult.value.length > 0) {
           const map = {}
-          for (const m of metrics) map[`${m.programId}_${m.gender}`] = m
+          for (const m of metricsResult.value) map[`${m.programId}_${m.gender}`] = m
           setMemberSharedData(map)
         } else {
+          if (metricsResult.status === 'rejected') {
+            console.error('DataContext program metrics fetch error:', metricsResult.reason)
+            nextErrors.programMetrics = metricsResult.reason
+          }
           setMemberSharedData(null)
         }
+
+        setDataErrors(nextErrors)
         setLoading(false)
       })
       .catch(err => {
@@ -108,6 +132,7 @@ export function DataProvider({ children }) {
       intakeQueue,
       intakeVolume,
       memberSharedData,
+      dataErrors,
       submitIntake,
       routeIntake,
       routeCarePlan,

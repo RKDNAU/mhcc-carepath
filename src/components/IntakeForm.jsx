@@ -502,9 +502,12 @@ function SuccessScreen({ data, onClose }) {
   )
 }
 
-export default function IntakeForm({ onClose, onPrivacy }) {
+export default function IntakeForm({ onClose, onPrivacy, initialSupportTypes = [] }) {
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState(INITIAL_FORM)
+  const [formData, setFormData] = useState(() => ({
+    ...INITIAL_FORM,
+    supportTypes: initialSupportTypes.filter(type => SUPPORT_TYPES.includes(type)),
+  }))
   const [submitError, setSubmitError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const TOTAL_STEPS = 3

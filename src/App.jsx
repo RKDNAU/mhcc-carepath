@@ -16,6 +16,7 @@ import AboutCarePathPage from './components/AboutCarePathPage'
 import AboutMHCCPage from './components/AboutMHCCPage'
 import PartnerOrganisationsPage from './components/PartnerOrganisationsPage'
 import NewsUpdatesPage from './components/NewsUpdatesPage'
+import ServiceOverviewPage from './components/ServiceOverviewPage'
 import { DEMO_PROVIDER } from './data/demoProvider'
 import { preloadAvatars } from './utils/avatarPreload'
 
@@ -25,6 +26,7 @@ export default function App() {
   const [showProviderLogin, setShowProviderLogin] = useState(false)
   const [providerUser, setProviderUser] = useState(null)
   const [currentPage, setCurrentPage] = useState(null)
+  const [initialSupportTypes, setInitialSupportTypes] = useState([])
 
   useEffect(() => {
     let link = document.querySelector("link[rel='icon']")
@@ -54,21 +56,27 @@ export default function App() {
     )
   }
 
+  const openIntakeForm = (supportTypes = []) => {
+    setInitialSupportTypes(supportTypes)
+    setCurrentPage(null)
+    setShowForm(true)
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <Navbar
-        onSeekSupport={() => setShowForm(true)}
+        onSeekSupport={() => openIntakeForm()}
         onProviderLogin={() => setShowProviderLogin(true)}
         onNavigate={page => setCurrentPage(page)}
       />
       <main>
         <Hero
-          onSeekSupport={() => setShowForm(true)}
+          onSeekSupport={() => openIntakeForm()}
         />
         <HowItWorks />
         <AboutMHCC />
-        <ServicesGrid />
-        <CallToAction onSeekSupport={() => setShowForm(true)} />
+        <ServicesGrid onOpenService={slug => setCurrentPage(`service:${slug}`)} />
+        <CallToAction onSeekSupport={() => openIntakeForm()} />
       </main>
       <Footer onPrivacyClick={() => setShowPrivacy(true)} />
 
@@ -76,6 +84,7 @@ export default function App() {
         <IntakeForm
           onClose={() => setShowForm(false)}
           onPrivacy={() => setShowPrivacy(true)}
+          initialSupportTypes={initialSupportTypes}
         />
       )}
       {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
@@ -91,6 +100,14 @@ export default function App() {
       {currentPage === 'about-mhcc'     && <AboutMHCCPage     onClose={() => setCurrentPage(null)} />}
       {currentPage === 'partners'        && <PartnerOrganisationsPage onClose={() => setCurrentPage(null)} />}
       {currentPage === 'news'            && <NewsUpdatesPage   onClose={() => setCurrentPage(null)} />}
+      {currentPage?.startsWith('service:') && (
+        <ServiceOverviewPage
+          slug={currentPage.replace('service:', '')}
+          onClose={() => setCurrentPage(null)}
+          onNavigate={slug => setCurrentPage(`service:${slug}`)}
+          onSeekSupport={openIntakeForm}
+        />
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 Audience: OpenAI Codex agents working in this repository. Read this first, then run `git status --short --branch` before changing anything.
 
-Discovery date: 2026-06-10. Last material update: 2026-06-10.
+Discovery date: 2026-06-10. Last material update: 2026-06-16.
 
 ## Project Summary
 
@@ -85,6 +85,7 @@ Client:
 - `src/context/DataContext.jsx`: provider-portal data loader and mutation helpers.
 - `src/data/programs.json`: canonical static program/service metadata, including the fictional Greener Pastures demo programs.
 - `src/data/programs.js`: imports `programs.json` and exports derived filter constants.
+- `src/data/serviceOverviews.js`: derives public service overview page summaries from `programs.json`.
 - `src/data/organisations.js`: organization IDs/names/URLs, including fictional `DEMO_GP`.
 - `src/data/demoProvider.js`: canonical fictional provider portal organization/team config for Greener Pastures.
 - `src/data/news.js`: static news article content.
@@ -137,7 +138,7 @@ No `VITE_*` env vars are used by the current app.
 `src/App.jsx` is the top-level state machine:
 - Public mode renders navbar, hero, informational sections, CTA, and footer.
 - Modal state controls `IntakeForm`, `PrivacyPolicy`, and `ProviderLogin`.
-- `currentPage` controls overlay pages: about CarePath, about MHCC, partners, and news.
+- `currentPage` controls overlay pages: about CarePath, about MHCC, partners, news, and service overviews.
 - If `providerUser` is set, the public app is replaced by `DataProvider` + `ProviderLayout`.
 
 Public services discovery is intentionally not exposed in the main-site menus. `ServicesDirectory.jsx` now supports an embedded mode and is registered as the second-last Provider Portal tab.
@@ -167,9 +168,10 @@ Nexus Human Services is a real listed organization and must remain sovereign. Do
 
 Public:
 - `Navbar.jsx`: dropdown navigation and mobile menu for public pages. Services discovery is not linked from the public menus.
-- `Hero.jsx`, `HowItWorks.jsx`, `AboutMHCC.jsx`, `ServicesGrid.jsx`, `CallToAction.jsx`, `Footer.jsx`: public landing sections.
-- `PageOverlay.jsx`: reusable full-screen overlay shell for about/partner/news pages.
+- `Hero.jsx`, `HowItWorks.jsx`, `AboutMHCC.jsx`, `ServicesGrid.jsx`, `CallToAction.jsx`, `Footer.jsx`: public landing sections; `ServicesGrid.jsx` opens service overview pages for its eight tiles.
+- `PageOverlay.jsx`: reusable full-screen overlay shell for about/partner/news/service pages.
 - `AboutCarePathPage.jsx`, `AboutMHCCPage.jsx`, `PartnerOrganisationsPage.jsx`, `NewsUpdatesPage.jsx`, `PrivacyPolicy.jsx`: static informational overlays.
+- `ServiceOverviewPage.jsx`: public service overview overlay backed by `src/data/serviceOverviews.js`; its Seek Support action opens `IntakeForm.jsx` with matching Step 2 support type options pre-selected but editable.
 - `ServicesDirectory.jsx`: searchable/filterable program directory backed by `src/data/programs.js`; used in embedded form inside the Provider Portal.
 - `IntakeForm.jsx`: 3-step public intake form.
 
