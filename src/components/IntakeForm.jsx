@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, ChevronRight, ChevronLeft, CheckCircle, Heart, AlertTriangle, ExternalLink } from 'lucide-react'
-import carePath from '/img/CarePath.png'
+const carePath = '/img/CarePath.png'
 import { apiPost } from '../api/client'
 
 const SEEKER_GROUPS = [

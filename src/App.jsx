@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import carePathIcon from '/img/CarePath.png'
+const carePathIcon = '/img/CarePath.png'
 import { DataProvider } from './context/DataContext'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
