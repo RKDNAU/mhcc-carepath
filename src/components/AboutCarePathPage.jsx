@@ -10,7 +10,7 @@ const HOW_IT_WORKS = [
   {
     step: '02',
     title: 'We match you',
-    body: 'The MHCC ACT team reviews your intake and identifies the most suitable registered service providers across Canberra and the ACT — taking into account your situation, preferences, and how you\'d like to access support.',
+    body: 'The MHCC ACT team reviews your intake and identifies the most suitable registered service providers across Canberra and the ACT - taking into account your situation, preferences, and how you\'d like to access support.',
   },
   {
     step: '03',
@@ -22,7 +22,7 @@ const HOW_IT_WORKS = [
 const COMMITMENTS = [
   { icon: Shield, title: 'Confidential',   body: 'Your information is held securely and shared only with providers who can genuinely help you. It will never be sold or used for marketing.' },
   { icon: BadgeCheck, title: 'Free to use', body: 'CarePath costs nothing to use. Some services in our network may have fees, but the platform itself is free for everyone.' },
-  { icon: Users, title: 'Inclusive',        body: 'CarePath is designed for everyone in Canberra and the ACT — regardless of background, identity, age, or level of need.' },
+  { icon: Users, title: 'Inclusive',        body: 'CarePath is designed for everyone in Canberra and the ACT - regardless of background, identity, age, or level of need.' },
   { icon: Heart, title: 'Compassionate',    body: 'We know reaching out is not easy. Every intake is read by a real person who understands the courage it takes to ask for help.' },
 ]
 
@@ -36,7 +36,7 @@ export default function AboutCarePathPage({ onClose }) {
           <h1 className="text-3xl font-extrabold mb-4">Support is here for you</h1>
           <p className="text-brand-100 leading-relaxed text-lg max-w-2xl">
             CarePath is a free, confidential platform that connects people in Canberra and the ACT with
-            local mental health services. We believe getting help should be simple — not a bureaucratic
+            local mental health services. We believe getting help should be simple - not a bureaucratic
             obstacle course. Whatever you're going through, CarePath is here to help you find the right support.
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function AboutCarePathPage({ onClose }) {
             <p>
               CarePath is a referral and matching platform operated by the Mental Health Community Coalition
               of the ACT (MHCC ACT). It exists because finding the right mental health support in Canberra
-              can be confusing, time-consuming, and discouraging — particularly when you're already struggling.
+              can be confusing, time-consuming, and discouraging - particularly when you're already struggling.
             </p>
             <p>
               Through CarePath, individuals can submit a single intake form describing their needs and
@@ -119,7 +119,7 @@ export default function AboutCarePathPage({ onClose }) {
         <div className="bg-brand-50 border border-brand-100 rounded-2xl p-6">
           <h3 className="font-bold text-brand-900 mb-2">Operated by MHCC ACT</h3>
           <p className="text-sm text-brand-700 leading-relaxed">
-            CarePath is a service of the Mental Health Community Coalition of the ACT — the peak body
+            CarePath is a service of the Mental Health Community Coalition of the ACT - the peak body
             for community-managed mental health in the ACT, established in 2004 and funded by the
             ACT Government. MHCC ACT coordinates a network of over 56 member organisations committed
             to making Canberra a mentally healthy community.

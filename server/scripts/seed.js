@@ -225,6 +225,10 @@ function seedIntakes() {
     INSERT INTO intake_routes (intake_id, program_id, org_id, org_name, program_name, support_type, routed_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
+  const insertEvent = db.prepare(`
+    INSERT INTO intake_events (id, intake_id, event_type, body, created_by, created_at, metadata_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
   const rows = sampleIntakes()
 
   for (const r of rows) {
@@ -246,6 +250,15 @@ function seedIntakes() {
     for (const v of r.seekerGroups) insertTag.run(r.id, 'seekerGroup', v)
     for (const v of r.supportTypes) insertTag.run(r.id, 'supportType', v)
     for (const v of r.accessModes) insertTag.run(r.id, 'accessMode', v)
+    insertEvent.run(
+      `EVT-${r.id}-SUB`,
+      r.id,
+      'submitted',
+      'Seeded intake submitted through the public form.',
+      'CarePath seed',
+      r.submittedAt,
+      null
+    )
     if (r.routedProgramId) {
       insertRoute.run(
         r.id,
@@ -255,6 +268,15 @@ function seedIntakes() {
         r.routedProgramName,
         r.supportTypes[0] || null,
         r.routedAt
+      )
+      insertEvent.run(
+        `EVT-${r.id}-ROUTE`,
+        r.id,
+        'routed',
+        `Seeded referral routed to ${r.routedProgramName}.`,
+        'CarePath seed',
+        r.routedAt,
+        JSON.stringify({ programId: r.routedProgramId, orgName: r.routedOrgName, programName: r.routedProgramName })
       )
     }
   }
@@ -329,6 +351,7 @@ function seedProgramMetrics() {
 
 function refreshMockData() {
   return db.transaction(() => {
+    db.prepare('DELETE FROM intake_events').run()
     db.prepare('DELETE FROM intake_tags').run()
     db.prepare('DELETE FROM intake_routes').run()
     db.prepare('DELETE FROM intakes').run()

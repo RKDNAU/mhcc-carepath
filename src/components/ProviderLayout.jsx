@@ -10,6 +10,7 @@ import TeamMembers from './TeamMembers'
 import ProviderSettings from './ProviderSettings'
 import ServicesDirectory from './ServicesDirectory'
 import { DEMO_PROVIDER } from '../data/demoProvider'
+import { useData } from '../context/DataContext'
 import { avatarSrc, isAvatarFailed, isAvatarLoaded, markAvatarFailed, markAvatarLoaded, preloadAvatars } from '../utils/avatarPreload'
 
 const NAV_ITEMS = [
@@ -27,6 +28,7 @@ const initials = name =>
   name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('')
 
 export default function ProviderLayout({ user, onLogout }) {
+  const { providerPrograms, updateProviderProgram } = useData()
   const [activeNav, setActiveNav] = useState('intake')
   const [avatarLoaded, setAvatarLoaded] = useState(() => isAvatarLoaded(user.username))
   const [avatarError, setAvatarError] = useState(() => isAvatarFailed(user.username))
@@ -142,7 +144,15 @@ export default function ProviderLayout({ user, onLogout }) {
           {activeNav === 'sector-data'  && <SharedData />}
           {activeNav === 'org'          && <MyOrganisation provider={DEMO_PROVIDER} />}
           {activeNav === 'team'         && <TeamMembers user={user} provider={DEMO_PROVIDER} />}
-          {activeNav === 'services'     && <ServicesDirectory embedded />}
+          {activeNav === 'services'     && (
+            <ServicesDirectory
+              embedded
+              programs={providerPrograms}
+              editableOrgId={DEMO_PROVIDER.orgId}
+              currentUser={user.username}
+              onUpdateProgram={updateProviderProgram}
+            />
+          )}
           {activeNav === 'settings'     && <ProviderSettings />}
         </div>
       </div>

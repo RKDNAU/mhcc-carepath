@@ -82,7 +82,7 @@ Root:
 Client:
 - `src/App.jsx`: top-level UI state, modals, page overlays, provider login switch.
 - `src/api/client.js`: fetch wrapper using `BASE = '/api'`.
-- `src/context/DataContext.jsx`: provider-portal data loader and mutation helpers.
+- `src/context/DataContext.jsx`: provider-portal data loader and mutation helpers, including intake events and provider program overrides.
 - `src/data/programs.json`: canonical static program/service metadata, including the fictional Greener Pastures demo programs.
 - `src/data/programs.js`: imports `programs.json` and exports derived filter constants.
 - `src/data/serviceOverviews.js`: derives public service overview page summaries from `programs.json`.
@@ -109,6 +109,8 @@ Server:
 - `server/routes/intakeVolume.js`: weekly intake volume endpoint.
 - `server/routes/programMetrics.js`: sector/program metric endpoint.
 - `server/routes/admin.js`: CSV export and mock-data refresh endpoints.
+- `server/routes/providerPrograms.js`: provider program metadata endpoint with DB-backed override persistence.
+- `server/readiness.js`: production readiness warning helper used by `/api/health`.
 
 ## Runtime Architecture
 
@@ -150,9 +152,9 @@ Public services discovery is intentionally not exposed in the main-site menus. `
 - Provider APIs have no authentication guard.
 
 `DataContext.jsx` exists only around the provider portal:
-- Loads `intakeQueue`, `intakeVolume`, `memberSharedData`.
+- Loads `intakeQueue`, `intakeVolume`, `memberSharedData`, and DB-merged `providerPrograms`.
 - Builds `memberSharedData` as a map keyed by `${programId}_${gender}`.
-- Exposes `submitIntake`, `routeIntake`, `routeCarePlan`, and `refresh`.
+- Exposes `submitIntake`, `routeIntake`, `routeCarePlan`, `updateIntakeWorkflow`, `getIntakeEvents`, `addIntakeNote`, `updateProviderProgram`, and `refresh`.
 - `routeIntake` PATCHes an intake and updates local queue state immediately.
 - `routeCarePlan` PATCHes multiple route entries for one intake and updates local queue state immediately.
 
@@ -172,13 +174,13 @@ Public:
 - `PageOverlay.jsx`: reusable full-screen overlay shell for about/partner/news/service pages.
 - `AboutCarePathPage.jsx`, `AboutMHCCPage.jsx`, `PartnerOrganisationsPage.jsx`, `NewsUpdatesPage.jsx`, `PrivacyPolicy.jsx`: static informational overlays.
 - `ServiceOverviewPage.jsx`: public service overview overlay backed by `src/data/serviceOverviews.js`; its Seek Support action opens `IntakeForm.jsx` with matching Step 2 support type options pre-selected but editable.
-- `ServicesDirectory.jsx`: searchable/filterable program directory backed by `src/data/programs.js`; used in embedded form inside the Provider Portal.
+- `ServicesDirectory.jsx`: searchable/filterable program directory backed by `src/data/programs.js` or provider-loaded merged programs; embedded provider mode supports Greener Pastures program override editing.
 - `IntakeForm.jsx`: 3-step public intake form.
 
 Provider:
 - `ProviderLayout.jsx`: left nav and page switcher using `DEMO_PROVIDER`.
-- `SharedIntake.jsx`: provider intake queue table, filters, DB-backed service matching, routed row visibility, toast.
-- `IntakeDetailModal.jsx`: intake detail and route-referral select.
+- `SharedIntake.jsx`: provider intake queue table, search, quick filters, DB-backed service matching, workflow status visibility, toast.
+- `IntakeDetailModal.jsx`: intake detail, workflow fields, timeline/notes, and single or multi-program route-referral controls.
 - `IntakeData.jsx`: DB-backed CarePath intake analytics.
 - `ProgramData.jsx`: program-level metrics charts and filters.
 - `SharedData.jsx`: sector-level analytics and unmet needs grid.
@@ -199,8 +201,10 @@ Mock operational data must live in SQLite, not in client-side runtime generators
 
 Active mock DB data includes:
 - intake queue records in `intakes` and `intake_tags`, currently seeded as 54 recent-ish records over roughly four months with a mix of queued and routed statuses;
+- intake timeline rows in `intake_events`, seeded for submitted/routed mock events and extended by provider notes/status/workflow actions;
 - intake-volume rows in `intake_volume_weeks`, currently seeded as 18 weekly rows;
 - program and sector metrics in `program_metrics` and `program_metrics_age`, including deterministic current occupancy/capacity/waitlist bands.
+- provider program metadata overrides in `program_overrides`, used to persist demo-provider edits without mutating `src/data/programs.json`.
 
 Program metric seeding should keep occupancy realistic for demos:
 - a majority of programs should be under or at capacity;
@@ -262,7 +266,7 @@ Multi-value fields are stored in `intake_tags`:
 Base path is `/api`.
 
 Health:
-- `GET /health` -> `{ status: 'ok', db: 'connected' }`
+- `GET /health` -> `{ status: 'ok', db: 'connected', environment, warnings: [] }`
 
 Intakes:
 - `GET /intakes`
@@ -273,6 +277,17 @@ Intakes:
 - `PATCH /intakes/:id`
 - Accepts `status`, `assignedOrgId`, `routedProgramId`, `routedOrgName`, `routedProgramName`.
 - Also accepts `routes: [{ programId, orgId, orgName, programName, supportType }]` for multi-program care plan routing; the first route is mirrored to legacy single-route columns.
+- Also accepts workflow fields `referralOwner`, `followUpDue`, `routingNote`, and `declineReason`.
+- `GET /intakes/:id/events`
+- `POST /intakes/:id/events`
+- Stores provider notes and automatic submitted/routed/status/workflow timeline events.
+
+Provider programs:
+- `GET /provider/programs`
+- Optional query filter: `orgId`.
+- Returns static program metadata merged with `program_overrides`.
+- `PATCH /provider/programs/:programId`
+- Persists editable provider fields such as description, access mode, referral requirements, contact details, and listed capacity/wait values.
 
 Analytics:
 - `GET /intake-volume`
@@ -292,11 +307,13 @@ Versioned SQL files live in `server/migrations/`. `server/db.js` records applied
 
 Tables:
 - `intakes`: intake records, encrypted PII fields, workflow/routing fields.
+- `intake_events`: submitted/routed/status/workflow/note timeline rows for intake records.
 - `intake_routes`: committed single or multi-program route entries for an intake.
 - `intake_tags`: multi-select fields, composite primary key `(intake_id, kind, value)`.
 - `intake_volume_weeks`: DB-backed intake volume chart data.
 - `program_metrics`: gender-scoped program metric summaries.
 - `program_metrics_age`: age-group outcome/client rows for each program/gender.
+- `program_overrides`: provider-edited program metadata layered over canonical static programs.
 - `schema_migrations`: applied migration version records.
 
 Existing local DBs may contain legacy columns. Do not delete local DB files unless the user explicitly asks.
@@ -369,6 +386,7 @@ When adding UI:
 This is prototype-grade security:
 - Provider login accepts any non-empty username.
 - API endpoints have no auth/authorization.
+- Provider program override endpoints and intake event/note endpoints are also unauthenticated prototype APIs.
 - PII encryption falls back to a hardcoded dev key if `SERVER_ENCRYPTION_KEY` is unset.
 - GET `/api/intakes` returns decrypted PII to any caller with API access.
 - SQLite database is local and ignored, but not a production security boundary.
@@ -401,6 +419,7 @@ Adding or changing intake fields:
 Changing program/service metadata:
 - Update `src/data/programs.json`.
 - Keep `src/data/programs.js` as derived exports from the JSON.
+- For provider-editable demo details, prefer `program_overrides` through `/api/provider/programs` instead of changing canonical static metadata.
 - Check `server/programs.js`, `ServicesDirectory.jsx`, `SharedIntake.jsx`, `ProgramData.jsx`, and `SharedData.jsx` for assumptions about categories/access modes.
 - If changing `ALL_TARGET_GROUPS`, `ALL_FUNCTIONS`, or `ALL_ACCESS_MODES`, verify filters in service directory and shared intake.
 - If adding demo-provider programs, keep them under `DEMO_GP` and refresh mock data so program metrics exist.

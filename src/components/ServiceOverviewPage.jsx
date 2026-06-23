@@ -1,6 +1,47 @@
-import { ArrowLeft, ArrowRight, CheckCircle, HeartHandshake, MapPin, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, ExternalLink, HeartHandshake, MapPin, Users } from 'lucide-react'
 import PageOverlay from './PageOverlay'
 import { SERVICE_OVERVIEWS, getServiceOverview } from '../data/serviceOverviews'
+
+const PATHWAY_SOURCES = [
+  { label: 'MHCC ACT crisis and services', url: 'https://mhccact.org.au/mental-health-services/' },
+  { label: 'Medicare Mental Health', url: 'https://www.headtohealth.gov.au/' },
+  { label: 'Healthdirect mental health information', url: 'https://www.healthdirect.gov.au/mental-illness' },
+]
+
+const SERVICE_PATHWAY_META = {
+  'anxiety-depression': {
+    connectedWith: ['Counselling or coaching', 'Low-intensity wellbeing support', 'Service navigation'],
+    pathways: ['Self-referral where available', 'GP or Medicare Mental Health navigation', 'Phone or online support'],
+  },
+  'trauma-ptsd': {
+    connectedWith: ['Trauma-informed counselling', 'Stabilisation support', 'Care coordination'],
+    pathways: ['Warm referral from a support worker', 'GP or clinical referral where needed', 'Planned follow-up support'],
+  },
+  'support-groups': {
+    connectedWith: ['Peer groups', 'Facilitated group programs', 'Community participation supports'],
+    pathways: ['Self-referral', 'Community organisation intake', 'Provider recommendation'],
+  },
+  'youth-services': {
+    connectedWith: ['Youth-focused supports', 'Family-inclusive services', 'Kids Hub or age-appropriate pathways'],
+    pathways: ['Family or carer enquiry', 'School or GP support pathway', 'Youth-friendly phone or online support'],
+  },
+  'relationships-family': {
+    connectedWith: ['Family support', 'Carer support', 'Relationship or parenting assistance'],
+    pathways: ['Carer or family intake', 'Referral from another service', 'Community-based support'],
+  },
+  'substance-use': {
+    connectedWith: ['Coordinated mental health support', 'Alcohol and other drug-aware services', 'Navigation support'],
+    pathways: ['Service navigation', 'Referral from health or community provider', 'Coordinated care planning'],
+  },
+  'aged-care-support': {
+    connectedWith: ['Older-person wellbeing support', 'Community connection', 'Navigation and continuity support'],
+    pathways: ['Self or family enquiry', 'GP or community referral', 'Phone or outreach support'],
+  },
+  'eating-disorders': {
+    connectedWith: ['Care planning', 'Referral navigation', 'Recovery-oriented mental health support'],
+    pathways: ['GP or mental health care pathway', 'Specialist referral where needed', 'Support while finding appropriate care'],
+  },
+}
 
 function SummaryList({ title, items }) {
   return (
@@ -14,6 +55,25 @@ function SummaryList({ title, items }) {
           </li>
         ))}
       </ul>
+    </div>
+  )
+}
+
+function SourceLinks() {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {PATHWAY_SOURCES.map(source => (
+        <a
+          key={source.url}
+          href={source.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900 hover:underline"
+        >
+          {source.label}
+          <ExternalLink size={11} />
+        </a>
+      ))}
     </div>
   )
 }
@@ -52,6 +112,7 @@ function ServiceNav({ service, onNavigate, onClose }) {
 export default function ServiceOverviewPage({ slug, onClose, onNavigate, onSeekSupport }) {
   const service = getServiceOverview(slug) || SERVICE_OVERVIEWS[0]
   const hasSpecificMatches = service.programCount > 0
+  const pathwayMeta = SERVICE_PATHWAY_META[service.slug] || SERVICE_PATHWAY_META['anxiety-depression']
 
   return (
     <PageOverlay
@@ -119,6 +180,19 @@ export default function ServiceOverviewPage({ slug, onClose, onNavigate, onSeekS
             <SummaryList title="Support styles" items={service.supportStyles} />
             <SummaryList title="Who services commonly support" items={service.demographics} />
             <SummaryList title="How support may be accessed" items={service.accessModes} />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Common pathways</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <SummaryList title="You might be connected with" items={pathwayMeta.connectedWith} />
+            <SummaryList title="Common access pathways" items={pathwayMeta.pathways} />
+            <SummaryList title="When to seek urgent help" items={['Call 000 if anyone is in immediate danger', 'Call Access Mental Health ACT on 1800 629 354 for urgent ACT mental health support', 'Call Lifeline on 13 11 14 if overwhelmed or unsafe']} />
+          </div>
+          <div className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-800 mb-2">Source links</p>
+            <SourceLinks />
           </div>
         </section>
 

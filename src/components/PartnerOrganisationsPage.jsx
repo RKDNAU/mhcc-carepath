@@ -67,7 +67,7 @@ export default function PartnerOrganisationsPage({ onClose }) {
             <input
               autoFocus
               type="search"
-              placeholder="Search organisations…"
+              placeholder="Search organisations..."
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"

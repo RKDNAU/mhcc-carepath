@@ -124,8 +124,37 @@ function FilterBar({ openPanel, togglePanel, selections, toggleSelection }) {
   )
 }
 
-function ProgramCard({ program }) {
+function ProgramCard({ program, canEdit, currentUser, onUpdateProgram }) {
   const orgUrl = orgUrlMap[program.orgId]
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({
+    description: program.description || '',
+    accessMode: program.accessMode || '',
+    referralRequirements: program.referralRequirements || '',
+    contactName: program.contactName || '',
+    contactEmail: program.contactEmail || '',
+    contactPhone: program.contactPhone || '',
+    listedAvgWaitDays: program.avgWaitDays ?? '',
+    listedTotalCapacity: program.listedTotalCapacity ?? '',
+    listedCurrentClients: program.listedCurrentClients ?? '',
+  })
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await onUpdateProgram(program.id, {
+        ...form,
+        listedAvgWaitDays: form.listedAvgWaitDays === '' ? null : Number(form.listedAvgWaitDays),
+        listedTotalCapacity: form.listedTotalCapacity === '' ? null : Number(form.listedTotalCapacity),
+        listedCurrentClients: form.listedCurrentClients === '' ? null : Number(form.listedCurrentClients),
+        updatedBy: currentUser,
+      })
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-3 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
@@ -147,12 +176,73 @@ function ProgramCard({ program }) {
         ) : (
           <span className="text-xs text-slate-400">{program.orgName}</span>
         )}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setEditing(v => !v)}
+            className="ml-2 text-xs font-semibold text-slate-400 hover:text-brand-700"
+          >
+            {editing ? 'Close' : 'Edit'}
+          </button>
+        )}
       </div>
 
       {/* Description */}
       <p className="text-xs text-slate-600 leading-relaxed">
         {program.description}
       </p>
+      {program.referralRequirements && (
+        <p className="text-[11px] text-brand-700 leading-relaxed bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">
+          Referral notes: {program.referralRequirements}
+        </p>
+      )}
+      {(program.contactName || program.contactEmail || program.contactPhone) && (
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          Contact: {[program.contactName, program.contactEmail, program.contactPhone].filter(Boolean).join(' - ')}
+        </p>
+      )}
+
+      {editing && (
+        <div className="space-y-2 rounded-xl border border-brand-100 bg-brand-50 p-3">
+          <textarea
+            value={form.description}
+            onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+            rows={3}
+            className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white resize-none"
+          />
+          <select
+            value={form.accessMode}
+            onChange={e => setForm(prev => ({ ...prev, accessMode: e.target.value }))}
+            className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
+          >
+            {ALL_ACCESS_MODES.map(mode => <option key={mode} value={mode}>{mode}</option>)}
+          </select>
+          <input
+            value={form.referralRequirements}
+            onChange={e => setForm(prev => ({ ...prev, referralRequirements: e.target.value }))}
+            placeholder="Referral requirements"
+            className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <input value={form.contactName} onChange={e => setForm(prev => ({ ...prev, contactName: e.target.value }))} placeholder="Contact name" className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+            <input value={form.contactEmail} onChange={e => setForm(prev => ({ ...prev, contactEmail: e.target.value }))} placeholder="Contact email" className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+            <input value={form.contactPhone} onChange={e => setForm(prev => ({ ...prev, contactPhone: e.target.value }))} placeholder="Contact phone" className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <input type="number" value={form.listedAvgWaitDays} onChange={e => setForm(prev => ({ ...prev, listedAvgWaitDays: e.target.value }))} placeholder="Avg wait days" className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+            <input type="number" value={form.listedTotalCapacity} onChange={e => setForm(prev => ({ ...prev, listedTotalCapacity: e.target.value }))} placeholder="Total capacity" className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+            <input type="number" value={form.listedCurrentClients} onChange={e => setForm(prev => ({ ...prev, listedCurrentClients: e.target.value }))} placeholder="Current clients" className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:bg-slate-300"
+          >
+            {saving ? 'Saving...' : 'Save service details'}
+          </button>
+        </div>
+      )}
 
       {/* Tags */}
       <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
@@ -174,7 +264,7 @@ function ProgramCard({ program }) {
   )
 }
 
-export default function ServicesDirectory({ onClose, embedded = false }) {
+export default function ServicesDirectory({ onClose, embedded = false, programs = PROGRAMS, editableOrgId = null, currentUser = '', onUpdateProgram }) {
   const [query, setQuery] = useState('')
   const [openPanel, setOpenPanel] = useState(null)
   const [selections, setSelections] = useState(FILTER_SELECTIONS)
@@ -197,7 +287,7 @@ export default function ServicesDirectory({ onClose, embedded = false }) {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return PROGRAMS.filter(p => {
+    return programs.filter(p => {
       if (q && !p.name.toLowerCase().includes(q) && !p.orgName.toLowerCase().includes(q) && !p.description.toLowerCase().includes(q)) return false
       if (selections.targetGroup.length && !selections.targetGroup.some(g => p.targetGroups.includes(g))) return false
       if (selections.function.length && !selections.function.some(filterTerm =>
@@ -209,7 +299,7 @@ export default function ServicesDirectory({ onClose, embedded = false }) {
       if (selections.accessMode.length && !selections.accessMode.includes(p.accessMode)) return false
       return true
     })
-  }, [query, selections])
+  }, [query, selections, programs])
 
   const totalFilters = selections.targetGroup.length + selections.function.length + selections.accessMode.length
   const shellClass = embedded
@@ -224,9 +314,9 @@ export default function ServicesDirectory({ onClose, embedded = false }) {
           <div className="flex-1">
             <h2 className="text-lg font-bold text-slate-900">Services directory</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              {results.length} of {PROGRAMS.length} programs
-              {totalFilters > 0 && ` · ${totalFilters} filter${totalFilters > 1 ? 's' : ''} active`}
-              {' '}· Canberra & ACT
+              {results.length} of {programs.length} programs
+              {totalFilters > 0 && ` - ${totalFilters} filter${totalFilters > 1 ? 's' : ''} active`}
+              {' '}- Canberra & ACT
             </p>
           </div>
           {!embedded && (
@@ -246,7 +336,7 @@ export default function ServicesDirectory({ onClose, embedded = false }) {
             <input
               autoFocus
               type="search"
-              placeholder="Search by program name, organisation, or keyword…"
+              placeholder="Search by program name, organisation, or keyword..."
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
@@ -279,7 +369,15 @@ export default function ServicesDirectory({ onClose, embedded = false }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {results.map(p => <ProgramCard key={p.id} program={p} />)}
+              {results.map(p => (
+                <ProgramCard
+                  key={p.id}
+                  program={p}
+                  canEdit={!!editableOrgId && p.orgId === editableOrgId && !!onUpdateProgram}
+                  currentUser={currentUser}
+                  onUpdateProgram={onUpdateProgram}
+                />
+              ))}
             </div>
           )}
         </div>

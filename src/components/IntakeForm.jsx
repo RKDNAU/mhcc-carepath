@@ -47,7 +47,7 @@ const GENDER_OPTIONS = [
 const URGENCY_OPTIONS = [
   { value: 'low',    label: 'I can wait', sub: 'Within a few weeks' },
   { value: 'medium', label: 'Soon',       sub: 'Within a week'      },
-  { value: 'high',   label: 'Urgent',     sub: 'Within 1–2 days'   },
+  { value: 'high',   label: 'Urgent',     sub: 'Within 1-2 days'   },
   { value: 'crisis', label: 'Crisis',     sub: 'I need help now'    },
 ]
 
@@ -135,7 +135,7 @@ function OtherInput({ value, onChange }) {
       <input
         className="form-input text-sm"
         maxLength={255}
-        placeholder="Please describe (optional)…"
+        placeholder="Please describe (optional)..."
         value={value}
         onChange={e => onChange(e.target.value)}
       />
@@ -313,7 +313,7 @@ function Step2({ data, update }) {
         <textarea
           className="form-input resize-none"
           rows={3}
-          placeholder="You don't need to share more than you're comfortable with…"
+          placeholder="You don't need to share more than you're comfortable with..."
           value={data.description}
           onChange={e => update('description', e.target.value)}
         />
@@ -400,9 +400,9 @@ function Step3({ data, update, onPrivacy }) {
         <label className="form-label">Best time to contact</label>
         <select className="form-input" value={data.contactTime} onChange={e => update('contactTime', e.target.value)}>
           <option value="">No preference</option>
-          <option>Morning (8am – 12pm)</option>
-          <option>Afternoon (12pm – 5pm)</option>
-          <option>Evening (5pm – 8pm)</option>
+          <option>Morning (8am - 12pm)</option>
+          <option>Afternoon (12pm - 5pm)</option>
+          <option>Evening (5pm - 8pm)</option>
         </select>
       </div>
 
@@ -447,7 +447,7 @@ function Step3({ data, update, onPrivacy }) {
   )
 }
 
-function SuccessScreen({ data, onClose }) {
+function SuccessScreen({ data, submittedIntake, onClose }) {
   return (
     <div className="text-center py-6 animate-slide-up">
       <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -460,8 +460,24 @@ function SuccessScreen({ data, onClose }) {
       </p>
       <p className="text-slate-500 text-sm mb-8 max-w-sm mx-auto">
         We'll be in touch via{' '}
-        {data.contactMethod.join(' or ') || 'your preferred contact method'} within 1–2 business days.
+        {data.contactMethod.join(' or ') || 'your preferred contact method'} within 1-2 business days.
       </p>
+
+      {submittedIntake?.id && (
+        <div className="mb-5 max-w-sm mx-auto rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+          <p className="text-xs font-semibold text-brand-700 uppercase tracking-wide">Reference ID</p>
+          <p className="text-lg font-extrabold text-brand-900 mt-0.5">{submittedIntake.id}</p>
+        </div>
+      )}
+
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 mb-5 max-w-sm mx-auto text-left">
+        <p className="font-semibold text-slate-900 mb-2">What happens next</p>
+        <ul className="space-y-1.5 text-xs leading-relaxed">
+          <li>MHCC ACT reviews your intake and support preferences.</li>
+          <li>A provider may contact you using your preferred contact method.</li>
+          <li>If your needs change, use the crisis contacts below. This form is not monitored in real time.</li>
+        </ul>
+      </div>
 
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 mb-8 max-w-sm mx-auto text-left">
         <p className="font-semibold mb-3">If your situation becomes urgent, contact:</p>
@@ -510,6 +526,7 @@ export default function IntakeForm({ onClose, onPrivacy, initialSupportTypes = [
   }))
   const [submitError, setSubmitError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submittedIntake, setSubmittedIntake] = useState(null)
   const TOTAL_STEPS = 3
 
   const update = (field, value) => setFormData(prev => ({ ...prev, [field]: value }))
@@ -548,7 +565,8 @@ export default function IntakeForm({ onClose, onPrivacy, initialSupportTypes = [
       setSubmitError(null)
       setIsSubmitting(true)
       try {
-        await apiPost('/intakes', payloadFromForm())
+        const created = await apiPost('/intakes', payloadFromForm())
+        setSubmittedIntake(created)
         setStep('success')
       } catch (err) {
         console.error('Intake submit failed:', err)
@@ -585,7 +603,7 @@ export default function IntakeForm({ onClose, onPrivacy, initialSupportTypes = [
           {step === 1 && <Step1 data={formData} update={update} />}
           {step === 2 && <Step2 data={formData} update={update} />}
           {step === 3 && <Step3 data={formData} update={update} onPrivacy={onPrivacy} />}
-          {step === 'success' && <SuccessScreen data={formData} onClose={onClose} />}
+          {step === 'success' && <SuccessScreen data={formData} submittedIntake={submittedIntake} onClose={onClose} />}
           {submitError && step !== 'success' && (
             <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {submitError}

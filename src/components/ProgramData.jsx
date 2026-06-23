@@ -9,6 +9,7 @@ import { useData } from '../context/DataContext'
 import { COLORS } from '../constants/theme'
 import {
   barFill,
+  AnalyticsCaveat,
   ChartTipPlain,
   MetricCard,
   OutcomeModeToggle,
@@ -188,6 +189,7 @@ export default function ProgramData({ orgId, orgName }) {
     <div className="space-y-10">
       <div>
         <SectionLabel color="slate">Program Data</SectionLabel>
+        <AnalyticsCaveat />
         <p className="text-xs text-slate-400 -mt-2 mb-4">
           Organisation-scoped view of Sector Data{orgName ? ` for ${orgName}` : ''}.
         </p>
@@ -270,7 +272,7 @@ export default function ProgramData({ orgId, orgName }) {
           {selectedAge && (
             <p className="text-[11px] text-brand-600 pl-20">
               Showing data for <strong>{selectedAge}</strong> age group
-              {selectedGender !== 'All' && <> · <strong>{selectedGender}</strong></>}.
+              {selectedGender !== 'All' && <> - <strong>{selectedGender}</strong></>}.
               Click the bar again to deselect.
             </p>
           )}
@@ -284,7 +286,7 @@ export default function ProgramData({ orgId, orgName }) {
               <div>
                 <p className="text-sm font-semibold text-slate-900 mb-0.5">Best outcome demographics</p>
                 <p className="text-[11px] text-slate-400">
-                  Positive and non-positive client outcomes by age group · click a bar to filter
+                  Positive and non-positive client outcomes by age group - click a bar to filter
                 </p>
               </div>
               <OutcomeModeToggle value={outcomeMode} onChange={setOutcomeMode} />
@@ -346,14 +348,16 @@ export default function ProgramData({ orgId, orgName }) {
               unit=" days"
               sub="intake to first contact"
               color={waitColor}
+              help="Average listed wait days between intake and first contact in the prototype metrics."
             />
             <PositiveOutcomeCard base={scaledBase} selectedAge={selectedAge} />
             <MetricCard
               title="Clients served"
               value={displayMetrics.totalClients.toLocaleString()}
               unit=""
-              sub={`past 12 months${selectedAge ? ` · ${selectedAge}` : ''}${selectedGender !== 'All' ? ` · ${selectedGender}` : ''}`}
+              sub={`past 12 months${selectedAge ? ` - ${selectedAge}` : ''}${selectedGender !== 'All' ? ` - ${selectedGender}` : ''}`}
               color="text-brand-700"
+              help="Total clients represented in seeded program metric rows for the selected scope."
             />
           </div>
 
@@ -405,11 +409,11 @@ export default function ProgramData({ orgId, orgName }) {
 
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 {base.waitlistDepth === 0
-                  ? 'No current waitlist — referrals can proceed immediately.'
+                  ? 'No current waitlist - referrals can proceed immediately.'
                   : base.currentClients > base.totalCapacity
-                  ? `Slightly over capacity (${base.currentClients - base.totalCapacity} above limit). Waitlist of ${base.waitlistDepth} — factor into referral decision.`
+                  ? `Slightly over capacity (${base.currentClients - base.totalCapacity} above limit). Waitlist of ${base.waitlistDepth} - factor into referral decision.`
                   : base.availablePct === 0
-                  ? `At capacity. Waitlist of ${base.waitlistDepth} — factor into referral decision.`
+                  ? `At capacity. Waitlist of ${base.waitlistDepth} - factor into referral decision.`
                   : base.waitlistDepth <= 5
                   ? `Short waitlist. Estimated wait ~${Math.round(base.waitlistDepth * base.avgWaitDays)} additional days.`
                   : `Waitlist is building despite available places. Verify before referring.`}
@@ -421,8 +425,8 @@ export default function ProgramData({ orgId, orgName }) {
               <p className="text-sm font-semibold text-slate-900 mb-0.5">Current client demographics</p>
               <p className="text-[11px] text-slate-400 mb-4">
                 Active clients by age group
-                {selectedGender !== 'All' && <> · {selectedGender}</>}
-                {' '}· click to filter
+                {selectedGender !== 'All' && <> - {selectedGender}</>}
+                {' '}- click to filter
               </p>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart

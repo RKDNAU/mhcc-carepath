@@ -11,11 +11,11 @@ MHCC ACT is bound by the Privacy Act 1988 (Cth) and the Australian Privacy Princ
     title: '2. Information we collect',
     content: `When you submit an intake form through CarePath, we may collect:
 
-• Personal identifiers: your name, date of birth, and gender identity
-• Contact information: email address, phone number, and suburb
-• Health and sensitive information: the type of mental health support you are seeking, the urgency of your need, and any additional context you choose to share
-• Access preferences: preferred contact method, timing, and how you would like to access services
-• Optional free-text responses you voluntarily provide
+- Personal identifiers: your name, date of birth, and gender identity
+- Contact information: email address, phone number, and suburb
+- Health and sensitive information: the type of mental health support you are seeking, the urgency of your need, and any additional context you choose to share
+- Access preferences: preferred contact method, timing, and how you would like to access services
+- Optional free-text responses you voluntarily provide
 
 We do not collect information you do not voluntarily provide. All fields marked optional are genuinely optional.`,
   },
@@ -23,10 +23,10 @@ We do not collect information you do not voluntarily provide. All fields marked 
     title: '3. Why we collect this information',
     content: `We collect your personal information solely to:
 
-• Assess your support needs and identify appropriate member organisations
-• Facilitate a referral or connection to one or more CarePath member organisations
-• Communicate with you about the status of your intake and referral
-• Improve the accessibility and operation of the CarePath platform
+- Assess your support needs and identify appropriate member organisations
+- Facilitate a referral or connection to one or more CarePath member organisations
+- Communicate with you about the status of your intake and referral
+- Improve the accessibility and operation of the CarePath platform
 
 We will not use your information for marketing purposes or share it with third parties for commercial gain.`,
   },
@@ -40,8 +40,8 @@ You may withdraw consent at any time by contacting us. Please note that withdraw
     title: '5. Who we share your information with',
     content: `Your intake information may be shared with:
 
-• MHCC ACT staff and authorised volunteers involved in reviewing and processing your intake
-• CarePath member organisations identified as appropriate to your needs, for the purpose of making contact and arranging support
+- MHCC ACT staff and authorised volunteers involved in reviewing and processing your intake
+- CarePath member organisations identified as appropriate to your needs, for the purpose of making contact and arranging support
 
 We do not sell, rent, or disclose your personal information to any other third party except where required by law or with your consent.
 
@@ -61,10 +61,10 @@ While we endeavour to protect all personal information, no data transmission or 
     title: '8. Your rights',
     content: `Under the Australian Privacy Principles, you have the right to:
 
-• Request access to the personal information we hold about you
-• Request correction of inaccurate, incomplete, or out-of-date information
-• Withdraw consent for the use of your information
-• Make a complaint about how we have handled your information
+- Request access to the personal information we hold about you
+- Request correction of inaccurate, incomplete, or out-of-date information
+- Withdraw consent for the use of your information
+- Make a complaint about how we have handled your information
 
 To exercise any of these rights, please contact us using the details below.`,
   },
@@ -99,7 +99,7 @@ export default function PrivacyPolicy({ onClose }) {
           <div>
             <h2 className="text-lg font-bold text-slate-900">Privacy Policy</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Mental Health Community Coalition of the ACT · Effective May 2026
+              Mental Health Community Coalition of the ACT - Effective May 2026
             </p>
           </div>
           <button

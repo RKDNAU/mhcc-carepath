@@ -42,4 +42,6 @@ const ageCols = db.pragma('table_info(program_metrics_age)').map(c => c.name)
 if (!ageCols.includes('positive_outcome')) db.exec('ALTER TABLE program_metrics_age ADD COLUMN positive_outcome INTEGER DEFAULT 0')
 if (!ageCols.includes('negative_outcome')) db.exec('ALTER TABLE program_metrics_age ADD COLUMN negative_outcome INTEGER DEFAULT 0')
 
+db.path = DB_PATH
+
 module.exports = db

@@ -28,7 +28,7 @@ export default function CallToAction({ onSeekSupport }) {
           </a>
         </div>
         <p className="text-brand-300 text-sm mt-8">
-          ACT Mental Health Triage: <strong className="text-white">1800 629 354</strong> &nbsp;·&nbsp;
+          ACT Mental Health Triage: <strong className="text-white">1800 629 354</strong> &nbsp;-&nbsp;
           Emergency: <strong className="text-white">000</strong>
         </p>
       </div>

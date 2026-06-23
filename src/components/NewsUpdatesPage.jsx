@@ -15,7 +15,7 @@ function ArticleCard({ article }) {
       <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-4">
         <Calendar size={12} />
         {formatDate(article.date)}
-        <span className="mx-1">·</span>
+        <span className="mx-1">-</span>
         <span>{article.source}</span>
       </div>
       <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">

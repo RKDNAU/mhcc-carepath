@@ -17,7 +17,14 @@ import AboutMHCCPage from './components/AboutMHCCPage'
 import PartnerOrganisationsPage from './components/PartnerOrganisationsPage'
 import NewsUpdatesPage from './components/NewsUpdatesPage'
 import ServiceOverviewPage from './components/ServiceOverviewPage'
-import { CrisisHelplinesPage, FAQPage, SelfHelpGuidesPage } from './components/ResourcePages'
+import {
+  CarersFamilyPage,
+  CrisisHelplinesPage,
+  FAQPage,
+  GroupPathwaysPage,
+  MatchingExplainerPage,
+  SelfHelpGuidesPage,
+} from './components/ResourcePages'
 import ProviderInfoPage from './components/ProviderInfoPages'
 import { AccessibilityPage, TermsOfUseModal } from './components/LegalPages'
 import { DEMO_PROVIDER } from './data/demoProvider'
@@ -112,6 +119,9 @@ export default function App() {
       {currentPage === 'resource:self-help' && <SelfHelpGuidesPage onClose={() => setCurrentPage(null)} />}
       {currentPage === 'resource:crisis-helplines' && <CrisisHelplinesPage onClose={() => setCurrentPage(null)} />}
       {currentPage === 'resource:faq' && <FAQPage onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'resource:pathways' && <GroupPathwaysPage onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'resource:carers-family' && <CarersFamilyPage onClose={() => setCurrentPage(null)} />}
+      {currentPage === 'resource:matching' && <MatchingExplainerPage onClose={() => setCurrentPage(null)} />}
       {currentPage === 'accessibility' && <AccessibilityPage onClose={() => setCurrentPage(null)} />}
       {currentPage?.startsWith('provider:') && (
         <ProviderInfoPage page={currentPage} onClose={() => setCurrentPage(null)} />

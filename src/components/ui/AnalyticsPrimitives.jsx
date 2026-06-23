@@ -1,4 +1,5 @@
 import { COLORS } from '../../constants/theme'
+import { HelpCircle } from 'lucide-react'
 
 export function barFill(value, allValues, base = COLORS.brand, greyedOut = false) {
   if (greyedOut) return '#e2e8f0'
@@ -17,13 +18,35 @@ export function SectionLabel({ children, color = 'brand' }) {
   )
 }
 
-export function MetricCard({ title, value, unit = '', sub, color = 'text-brand-700', size = 'lg' }) {
+export function HelpTooltip({ label, children }) {
+  return (
+    <span className="relative inline-flex items-center group">
+      <HelpCircle size={13} className="text-slate-400 group-hover:text-brand-600" aria-label={label} />
+      <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-64 -translate-x-1/2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-xs font-normal leading-relaxed text-slate-600 shadow-xl group-hover:block">
+        {children}
+      </span>
+    </span>
+  )
+}
+
+export function AnalyticsCaveat() {
+  return (
+    <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
+      Prototype analytics use seeded/mock operational data for demonstration. They should not be treated as live performance reporting.
+    </div>
+  )
+}
+
+export function MetricCard({ title, value, unit = '', sub, color = 'text-brand-700', size = 'lg', help = null }) {
   const valueClass = size === 'sm' ? 'text-3xl' : 'text-4xl'
   const unitClass = size === 'sm' ? 'text-base font-semibold ml-0.5 opacity-70' : 'text-xl'
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center flex flex-col items-center gap-2">
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{title}</p>
+      <p className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+        {title}
+        {help && <HelpTooltip label={`${title} definition`}>{help}</HelpTooltip>}
+      </p>
       <p className={`${valueClass} font-extrabold ${color} leading-none`}>
         {value}<span className={unitClass}>{unit}</span>
       </p>

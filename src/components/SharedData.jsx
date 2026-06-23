@@ -9,6 +9,7 @@ import { useData } from '../context/DataContext'
 import { COLORS } from '../constants/theme'
 import {
   barFill,
+  AnalyticsCaveat,
   ChartTipPlain,
   MetricCard,
   OutcomeModeToggle,
@@ -186,9 +187,10 @@ export default function SharedData() {
   return (
     <div className="space-y-10">
 
-      {/* ── Filters ────────────────────────────────────────────────── */}
+      {/* Filters */}
       <div>
         <SectionLabel color="brand">Sector analytics</SectionLabel>
+        <AnalyticsCaveat />
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
 
           <div className="flex items-center gap-3">
@@ -239,7 +241,7 @@ export default function SharedData() {
             </select>
             {selectedAge && (
               <span className="text-[11px] text-brand-600">
-                Showing data for <strong>{selectedAge}</strong> · click the bar again or change dropdown to deselect
+                Showing data for <strong>{selectedAge}</strong> - click the bar again or change dropdown to deselect
               </span>
             )}
           </div>
@@ -288,16 +290,16 @@ export default function SharedData() {
         </div>
       </div>
 
-      {/* ── Unmet needs analysis ───────────────────────────────────── */}
+      {/* Unmet needs analysis */}
       <div>
         <SectionLabel color="amber">Unmet needs analysis</SectionLabel>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <p className="text-sm font-semibold text-slate-900 mb-0.5">Target group × function coverage</p>
+          <p className="text-sm font-semibold text-slate-900 mb-0.5">Target group x function coverage</p>
           <p className="text-[11px] text-slate-400 mb-4">
             Programs available per combination
-            {selectedOrgName ? ` · ${selectedOrgName}` : ''}
-            {selectedProgram ? ` · ${orgPrograms.find(p => p.id === selectedProgram)?.name ?? ''}` : ''}.{' '}
-            <span className="text-red-600 font-semibold">Red = no programs</span>, amber = 1–2, green = 3+.
+            {selectedOrgName ? ` - ${selectedOrgName}` : ''}
+            {selectedProgram ? ` - ${orgPrograms.find(p => p.id === selectedProgram)?.name ?? ''}` : ''}.{' '}
+            <span className="text-red-600 font-semibold">Red = no programs</span>, amber = 1-2, green = 3+.
           </p>
           {unmetGrid.length === 0 ? (
             <p className="text-sm text-slate-400 py-2">No target groups match the current filters.</p>
@@ -332,7 +334,7 @@ export default function SharedData() {
         </div>
       </div>
 
-      {/* ── Sector performance ────────────────────────────────────── */}
+      {/* Sector performance */}
       {base ? (
         <div>
           <SectionLabel color="slate">Sector performance</SectionLabel>
@@ -345,7 +347,7 @@ export default function SharedData() {
                   <p className="text-sm font-semibold text-slate-900 mb-0.5">Best outcome demographics</p>
                   <p className="text-[11px] text-slate-400">
                     Positive and non-positive client outcomes by age group across{' '}
-                    {filteredPrograms.length} program{filteredPrograms.length !== 1 ? 's' : ''} · click a bar to filter
+                    {filteredPrograms.length} program{filteredPrograms.length !== 1 ? 's' : ''} - click a bar to filter
                   </p>
                 </div>
                 <OutcomeModeToggle value={outcomeMode} onChange={setOutcomeMode} />
@@ -404,8 +406,9 @@ export default function SharedData() {
               <MetricCard
                 title="Clients served"
                 value={displayClients.toLocaleString()}
-                sub={`past 12 months${selectedAge ? ` · ${selectedAge}` : ''}${selectedGender !== 'All' ? ` · ${selectedGender}` : ''}`}
+                sub={`past 12 months${selectedAge ? ` - ${selectedAge}` : ''}${selectedGender !== 'All' ? ` - ${selectedGender}` : ''}`}
                 color="text-brand-700"
+                help="Total clients represented in seeded sector metric rows for the selected filters."
               />
               <MetricCard
                 title="Average wait time"
@@ -413,6 +416,7 @@ export default function SharedData() {
                 unit=" days"
                 sub="intake to first contact"
                 color={waitColor}
+                help="Average listed wait days between intake and first contact in the prototype metrics."
               />
               <MetricCard
                 title="Positive outcome rate"
@@ -420,6 +424,7 @@ export default function SharedData() {
                 unit="%"
                 sub={`${positiveData.positive.toLocaleString()} of ${positiveData.total.toLocaleString()} clients`}
                 color="text-emerald-700"
+                help="Share of positive outcomes out of positive plus non-positive outcomes."
               />
               <MetricCard
                 title="Available capacity"
@@ -427,6 +432,7 @@ export default function SharedData() {
                 unit="%"
                 sub={`${Math.max(0, base.totalCapacity - base.currentClients).toLocaleString()} places across sector`}
                 color={capColor}
+                help="Available capacity compares current clients with listed total capacity."
               />
             </div>
 
@@ -435,8 +441,8 @@ export default function SharedData() {
               <p className="text-sm font-semibold text-slate-900 mb-0.5">Current client demographics</p>
               <p className="text-[11px] text-slate-400 mb-4">
                 Active clients by age group
-                {selectedGender !== 'All' && <> · {selectedGender}</>}
-                {' '}· click to filter
+                {selectedGender !== 'All' && <> - {selectedGender}</>}
+                {' '}- click to filter
               </p>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
@@ -467,7 +473,7 @@ export default function SharedData() {
         </div>
       ) : (
         <p className="text-sm text-slate-400 py-4">
-          No programs match the current filters — try adjusting your selection.
+          No programs match the current filters - try adjusting your selection.
         </p>
       )}
 

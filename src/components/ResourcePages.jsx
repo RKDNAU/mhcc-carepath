@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink, HelpCircle, Phone, ShieldAlert } from 'lucide-react'
+import { BookOpen, ExternalLink, HelpCircle, HeartHandshake, Phone, ShieldAlert, Users } from 'lucide-react'
 import PageOverlay from './PageOverlay'
 
 const SOURCE_LINKS = {
@@ -12,6 +12,13 @@ const SOURCE_LINKS = {
   medicareCheckIn: 'https://www.health.gov.au/news/medicare-mental-health-check-in-launches-self-guided-service',
   navigatingServices: 'https://www.medicarementalhealth.gov.au/finding-help/navigating-mental-health-services',
   betterAccess: 'https://www.health.gov.au/our-work/better-access-initiative',
+  medicareHome: 'https://www.headtohealth.gov.au/',
+  medicareLivingWell: 'https://www.headtohealth.gov.au/living-well',
+  medicareCrisis: 'https://www.headtohealth.gov.au/crisis-links',
+  healthdirectLgbtiq: 'https://www.healthdirect.gov.au/lgbtiq-mental-health',
+  healthdirectTalk: 'https://www.healthdirect.gov.au/how-to-talk-about-your-mental-health-concerns',
+  healthCarers: 'https://www.health.gov.au/topics/disability-and-carers/supporting-carers',
+  healthKidsHubs: 'https://www.health.gov.au/our-work/medicare-mental-health',
 }
 
 const CRISIS_CONTACTS = [
@@ -178,6 +185,80 @@ const FAQS = [
   },
 ]
 
+const PATHWAY_GROUPS = [
+  {
+    title: 'Aboriginal and Torres Strait Islander peoples',
+    body: 'Medicare Mental Health links to identity-specific resources, and 13YARN provides 24/7 culturally safe crisis support.',
+    source: 'Medicare Mental Health / 13YARN',
+    url: SOURCE_LINKS.medicareLivingWell,
+  },
+  {
+    title: 'Multicultural and CALD communities',
+    body: 'Medicare Mental Health includes resources for multicultural people, and CarePath can record language or cultural preferences in the intake form.',
+    source: 'Medicare Mental Health',
+    url: SOURCE_LINKS.medicareLivingWell,
+  },
+  {
+    title: 'LGBTQIA+ people',
+    body: 'Healthdirect lists LGBTIQA+ mental health supports, including QLife counselling and referral.',
+    source: 'Healthdirect',
+    url: SOURCE_LINKS.healthdirectLgbtiq,
+  },
+  {
+    title: 'Young people',
+    body: 'Medicare Mental Health Kids Hubs provide free support for children aged 0 to 12, with support also extending to families, carers and kin.',
+    source: 'Australian Government',
+    url: SOURCE_LINKS.healthKidsHubs,
+  },
+  {
+    title: 'Older people',
+    body: 'Medicare Mental Health can help people find mental health and wellbeing resources for themselves or someone they care about.',
+    source: 'Medicare Mental Health',
+    url: SOURCE_LINKS.medicareHome,
+  },
+  {
+    title: 'Carers and families',
+    body: 'Australian Government carer information describes services and support for carers, including young carers.',
+    source: 'Australian Government',
+    url: SOURCE_LINKS.healthCarers,
+  },
+]
+
+const CARER_GUIDANCE = [
+  {
+    title: 'Seeking support for yourself',
+    body: 'Carers and family members can seek support for their own wellbeing. CarePath can record carer or family context as part of the intake.',
+    source: 'Australian Government carer support',
+    url: SOURCE_LINKS.healthCarers,
+  },
+  {
+    title: 'Helping someone else',
+    body: 'Medicare Mental Health provides guidance for people helping someone they care about and can help connect people with services.',
+    source: 'Medicare Mental Health',
+    url: SOURCE_LINKS.medicareHome,
+  },
+  {
+    title: 'Consent and information sharing',
+    body: 'CarePath can use information provided with consent to support matching. Providers may need direct consent before sharing detailed personal information.',
+    source: 'CarePath Privacy Policy',
+    url: SOURCE_LINKS.mhccAbout,
+  },
+  {
+    title: 'When it is urgent',
+    body: 'Call 000 for immediate danger. Medicare Mental Health lists crisis supports including Lifeline, Kids Helpline and other 24/7 options.',
+    source: 'Medicare Mental Health crisis links',
+    url: SOURCE_LINKS.medicareCrisis,
+  },
+]
+
+const MATCHING_FACTORS = [
+  ['Described identity or group', 'The matching view compares intake groups with the people each service commonly supports.'],
+  ['Support need', 'Requested support types are compared with service functions and program descriptions.'],
+  ['Access preference', 'Preferred access modes are compared with how each program can be accessed.'],
+  ['Aggregate demographic data', 'Prototype sector data helps show whether similar cohorts have had positive outcomes.'],
+  ['Availability', 'Capacity, waitlist depth and average wait days help surface practical referral options.'],
+]
+
 function SourceLink({ source, url }) {
   return (
     <a
@@ -302,6 +383,93 @@ export function FAQPage({ onClose }) {
             </div>
           </article>
         ))}
+      </div>
+    </PageOverlay>
+  )
+}
+
+export function GroupPathwaysPage({ onClose }) {
+  return (
+    <PageOverlay title="Support Pathways" subtitle="Group-specific pathways and source links" onClose={onClose} maxWidth="max-w-5xl">
+      <div className="space-y-6">
+        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <Users size={22} className="text-brand-600 mt-0.5" />
+            <p className="text-sm text-slate-600 leading-relaxed">
+              These prototype pathways point to public MHCC ACT, Australian Government, Medicare Mental Health or Healthdirect information.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {PATHWAY_GROUPS.map(item => (
+            <article key={item.title} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+              <h2 className="font-bold text-slate-900">{item.title}</h2>
+              <p className="text-sm text-slate-500 leading-relaxed mt-2">{item.body}</p>
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <SourceLink source={item.source} url={item.url} />
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </PageOverlay>
+  )
+}
+
+export function CarersFamilyPage({ onClose }) {
+  return (
+    <PageOverlay title="For Carers And Family" subtitle="Seeking support for yourself or someone you care about" onClose={onClose} maxWidth="max-w-5xl">
+      <div className="space-y-6">
+        <div className="bg-brand-50 border border-brand-100 rounded-2xl p-6">
+          <h1 className="text-xl font-bold text-brand-950">CarePath can include carer and family context.</h1>
+          <p className="text-sm text-brand-800 leading-relaxed mt-2">
+            The intake form lets you say whether you are a carer or family member, describe what is happening, and note access or contact preferences.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {CARER_GUIDANCE.map(item => (
+            <article key={item.title} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+              <h2 className="font-bold text-slate-900">{item.title}</h2>
+              <p className="text-sm text-slate-500 leading-relaxed mt-2">{item.body}</p>
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <SourceLink source={item.source} url={item.url} />
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </PageOverlay>
+  )
+}
+
+export function MatchingExplainerPage({ onClose }) {
+  return (
+    <PageOverlay title="How Matching Works" subtitle="Plain-language prototype explainer" onClose={onClose} maxWidth="max-w-5xl">
+      <div className="space-y-6">
+        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <HeartHandshake size={22} className="text-brand-600 mt-0.5" />
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">Matching supports human review.</h1>
+              <p className="text-sm text-slate-500 leading-relaxed mt-2">
+                CarePath matching is a prototype decision-support view. It does not diagnose, triage clinically or replace professional judgement.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {MATCHING_FACTORS.map(([title, body]) => (
+            <article key={title} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+              <h2 className="font-bold text-slate-900">{title}</h2>
+              <p className="text-sm text-slate-500 leading-relaxed mt-2">{body}</p>
+            </article>
+          ))}
+        </div>
+        <div className="bg-slate-100 rounded-2xl p-5">
+          <p className="text-sm text-slate-600 leading-relaxed">
+            If there is immediate danger, call 000. If urgent mental health support is needed in the ACT, call Access Mental Health on 1800 629 354.
+          </p>
+        </div>
       </div>
     </PageOverlay>
   )

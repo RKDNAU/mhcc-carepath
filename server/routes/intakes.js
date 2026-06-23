@@ -7,6 +7,8 @@ const { encrypt, decrypt } = require('../crypto')
 
 const router = Router()
 
+const VALID_STATUSES = new Set(['queued', 'routed', 'accepted', 'contacted', 'waitlisted', 'declined', 'closed'])
+
 const IntakeSchema = z.object({
   firstName:           z.string().optional().default(''),
   lastName:            z.string().optional().default(''),
@@ -67,12 +69,45 @@ function rowsToIntake(intakeRow, tags, routes = []) {
     routedAt:             intakeRow.routed_at           || null,
     routedOrgName:        intakeRow.routed_org_name     || null,
     routedProgramName:    intakeRow.routed_program_name || null,
+    referralOwner:        intakeRow.referral_owner      || '',
+    followUpDue:          intakeRow.follow_up_due       || '',
+    routingNote:          intakeRow.routing_note        || '',
+    declineReason:        intakeRow.decline_reason      || '',
     routedPrograms,
     seekerGroups:   grouped.seekerGroup,
     supportTypes:   grouped.supportType,
     accessModes:    grouped.accessMode,
     contactMethod:  grouped.contactMethod,
   }
+}
+
+function eventFromRow(row) {
+  return {
+    id: row.id,
+    intakeId: row.intake_id,
+    eventType: row.event_type,
+    body: row.body || '',
+    createdBy: row.created_by || '',
+    createdAt: row.created_at,
+    metadata: row.metadata_json ? JSON.parse(row.metadata_json) : null,
+  }
+}
+
+function addEvent({ intakeId, eventType, body = '', createdBy = 'CarePath', metadata = null, createdAt = new Date().toISOString() }) {
+  const id = 'EVT-' + randomUUID().slice(0, 8).toUpperCase()
+  db.prepare(`
+    INSERT INTO intake_events (id, intake_id, event_type, body, created_by, created_at, metadata_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id,
+    intakeId,
+    eventType,
+    body,
+    createdBy,
+    createdAt,
+    metadata ? JSON.stringify(metadata) : null
+  )
+  return id
 }
 
 // GET /api/intakes
@@ -142,6 +177,13 @@ router.post('/', (req, res) => {
     for (const v of d.supportTypes)  insertTag.run(id, 'supportType',  v)
     for (const v of d.accessModes)   insertTag.run(id, 'accessMode',   v)
     for (const v of d.contactMethod) insertTag.run(id, 'contactMethod', v)
+    addEvent({
+      intakeId: id,
+      eventType: 'submitted',
+      body: 'Intake submitted through the public form.',
+      createdBy: 'CarePath',
+      createdAt: submittedAt,
+    })
   })()
 
   const row = db.prepare('SELECT * FROM intakes WHERE id = ?').get(id)
@@ -149,12 +191,55 @@ router.post('/', (req, res) => {
   res.status(201).json(rowsToIntake(row, tags))
 })
 
+router.get('/:id/events', (req, res) => {
+  const { id } = req.params
+  const intake = db.prepare('SELECT id FROM intakes WHERE id = ?').get(id)
+  if (!intake) return res.status(404).json({ error: 'Not found' })
+
+  const rows = db.prepare('SELECT * FROM intake_events WHERE intake_id = ? ORDER BY created_at ASC').all(id)
+  res.json(rows.map(eventFromRow))
+})
+
+router.post('/:id/events', (req, res) => {
+  const { id } = req.params
+  const intake = db.prepare('SELECT id FROM intakes WHERE id = ?').get(id)
+  if (!intake) return res.status(404).json({ error: 'Not found' })
+
+  const parsed = z.object({
+    body: z.string().trim().min(1).max(2000),
+    createdBy: z.string().trim().max(200).optional().default('Provider user'),
+  }).safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const eventId = addEvent({
+    intakeId: id,
+    eventType: 'note',
+    body: parsed.data.body,
+    createdBy: parsed.data.createdBy,
+  })
+  const row = db.prepare('SELECT * FROM intake_events WHERE id = ?').get(eventId)
+  res.status(201).json(eventFromRow(row))
+})
+
 // PATCH /api/intakes/:id
 router.patch('/:id', (req, res) => {
   const { id } = req.params
-  const { status, assignedOrgId, routedProgramId, routedOrgName, routedProgramName, routes } = req.body
-  const row = db.prepare('SELECT id FROM intakes WHERE id = ?').get(id)
+  const {
+    status,
+    assignedOrgId,
+    routedProgramId,
+    routedOrgName,
+    routedProgramName,
+    routes,
+    referralOwner,
+    followUpDue,
+    routingNote,
+    declineReason,
+    updatedBy = 'Provider user',
+  } = req.body
+  const row = db.prepare('SELECT * FROM intakes WHERE id = ?').get(id)
   if (!row) return res.status(404).json({ error: 'Not found' })
+  if (status && !VALID_STATUSES.has(status)) return res.status(400).json({ error: 'Invalid status' })
 
   const routeRows = Array.isArray(routes)
     ? routes.filter(route => route?.programId && route?.programName)
@@ -162,6 +247,10 @@ router.patch('/:id', (req, res) => {
 
   const fields = [], params = []
   if (status)       { fields.push('status = ?');          params.push(status)       }
+  if (referralOwner !== undefined) { fields.push('referral_owner = ?'); params.push(referralOwner || null) }
+  if (followUpDue !== undefined)   { fields.push('follow_up_due = ?');  params.push(followUpDue || null)   }
+  if (routingNote !== undefined)   { fields.push('routing_note = ?');   params.push(routingNote || null)   }
+  if (declineReason !== undefined) { fields.push('decline_reason = ?'); params.push(declineReason || null) }
   if (assignedOrgId !== undefined) {
     fields.push('assigned_org_id = ?', 'assigned_at = ?')
     params.push(assignedOrgId, new Date().toISOString())
@@ -219,6 +308,13 @@ router.patch('/:id', (req, res) => {
           routedAt
         )
       }
+      addEvent({
+        intakeId: id,
+        eventType: 'routed',
+        body: routingNote || `${routeRows.length} program${routeRows.length === 1 ? '' : 's'} added to the care plan.`,
+        createdBy: updatedBy,
+        metadata: { routes: routeRows },
+      })
     } else if (routedProgramId !== undefined) {
       deleteRoutes.run(id)
       const updated = db.prepare('SELECT * FROM intakes WHERE id = ?').get(id)
@@ -231,6 +327,33 @@ router.patch('/:id', (req, res) => {
         null,
         updated.routed_at || new Date().toISOString()
       )
+      addEvent({
+        intakeId: id,
+        eventType: 'routed',
+        body: routingNote || `Referral routed to ${routedProgramName || 'selected program'}.`,
+        createdBy: updatedBy,
+        metadata: { programId: routedProgramId, orgName: routedOrgName, programName: routedProgramName },
+      })
+    }
+
+    if (status && status !== row.status) {
+      addEvent({
+        intakeId: id,
+        eventType: 'status',
+        body: `Status changed from ${row.status} to ${status}.`,
+        createdBy: updatedBy,
+        metadata: { from: row.status, to: status },
+      })
+    }
+
+    if (referralOwner !== undefined || followUpDue !== undefined || declineReason !== undefined || routingNote !== undefined) {
+      addEvent({
+        intakeId: id,
+        eventType: 'workflow',
+        body: 'Workflow details updated.',
+        createdBy: updatedBy,
+        metadata: { referralOwner, followUpDue, declineReason, routingNote },
+      })
     }
   })()
 

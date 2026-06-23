@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { Filter, ChevronDown, CheckCircle } from 'lucide-react'
+import { Filter, ChevronDown, CheckCircle, Search } from 'lucide-react'
 import IntakeDetailModal from './IntakeDetailModal'
 import { useData } from '../context/DataContext'
 import { PROGRAMS, ALL_TARGET_GROUPS, ALL_FUNCTIONS, ALL_ACCESS_MODES } from '../data/programs'
@@ -37,14 +37,14 @@ const SUPPORT_TYPE_OPTIONS = Object.keys(SUPPORT_FN_MAP)
 // Normalise access mode strings for comparison (strip spaces/slashes)
 const norm = s => s.toLowerCase().replace(/[\s/]/g, '')
 
-// ── Match scoring (5 components, 100% total) ─────────────────────────────
+// Match scoring (5 components, 100% total)
 //
 // 1. Describes       30%  proportion of seekerGroups (non-Other) matched
 // 2. Seeking support 30%  proportion of supportTypes (non-Other) matched
-// 3. Access modes    10%  any access mode match → 10%, else 0%
-// 4. Demographic     20%  (outcomeRate for age+gender / 100) × 20
+// 3. Access modes    10%  any access mode match -> 10%, else 0%
+// 4. Demographic     20%  (outcomeRate for age+gender / 100) x 20
 // 5. Availability    10%  three equal sub-factors (3.333% each):
-//      - Capacity      boolean – program.capacity > 0
+//      - Capacity      boolean - program.capacity > 0
 //      - Waitlist      relative depth across all programs (lower = better)
 //      - Wait time     relative avgWaitDays across all programs (lower = better)
 //
@@ -69,7 +69,7 @@ function metricForProgram(program, gender, memberSharedData) {
 }
 
 function computeMatchScore(program, intake, pd, globalStats, memberSharedData, options = {}) {
-  // ── 1. Describes (up to 30%) ─────────────────────────────────────────────
+  // 1. Describes (up to 30%)
   const groups = intake.seekerGroups.filter(g => g !== 'Other')
   const matchedGroups = groups.filter(g => {
     const mapped = TARGET_MAP[g]
@@ -78,7 +78,7 @@ function computeMatchScore(program, intake, pd, globalStats, memberSharedData, o
   const unmatchedGroups = groups.filter(g => !matchedGroups.includes(g))
   const describesScore = groups.length > 0 ? (matchedGroups.length / groups.length) * 30 : 0
 
-  // ── 2. Seeking Support For (up to 30%) ───────────────────────────────────
+  // 2. Seeking Support For (up to 30%)
   const types = options.ignoreSupportTypes ? [] : (intake.supportTypes || []).filter(t => t !== 'Other')
   const matchedTypes = types.filter(t => {
     const fns = SUPPORT_FN_MAP[t] || []
@@ -93,13 +93,13 @@ function computeMatchScore(program, intake, pd, globalStats, memberSharedData, o
   const unmatchedTypes = types.filter(t => !matchedTypes.includes(t))
   const seekingScore = options.ignoreSupportTypes ? 30 : (types.length > 0 ? (matchedTypes.length / types.length) * 30 : 0)
 
-  // ── 3. Access Modes (10% or 0%) ──────────────────────────────────────────
+  // 3. Access Modes (10% or 0%)
   const accessModes = intake.accessModes || []
   const matchedAccess = accessModes.filter(am => norm(am) === norm(program.accessMode))
   const unmatchedAccess = accessModes.filter(am => norm(am) !== norm(program.accessMode))
   const accessScore = matchedAccess.length > 0 ? 10 : 0
 
-  // ── 4. Demographic success (up to 20%) ───────────────────────────────────
+  // 4. Demographic success (up to 20%)
   let demographicScore = 0
   let demographicFit = 0
   let ageGroup = null
@@ -116,20 +116,20 @@ function computeMatchScore(program, intake, pd, globalStats, memberSharedData, o
     demographicScore = (demographicFit / 100) * 20
   }
 
-  // ── 5. Availability (up to 10%) ──────────────────────────────────────────
+  // 5. Availability (up to 10%)
   const PER_FACTOR = 10 / 3
 
   // Capacity: boolean from explicit program field
   const hasCapacity = (program.capacity ?? 0) > 0
   const capacityScore = hasCapacity ? PER_FACTOR : 0
 
-  // Waitlist depth: lower is better; 0 → full score, max → 0
+  // Waitlist depth: lower is better; 0 -> full score, max -> 0
   const wlDepth = pd?.waitlistDepth ?? 0
   const waitlistScore = globalStats.maxWaitlistDepth > 0
     ? (1 - wlDepth / globalStats.maxWaitlistDepth) * PER_FACTOR
     : PER_FACTOR
 
-  // Average wait days: lower is better; min → full score, max → 0
+  // Average wait days: lower is better; min -> full score, max -> 0
   const wd = program.avgWaitDays ?? 7
   const wdRange = globalStats.maxAvgWaitDays - globalStats.minAvgWaitDays
   const waitTimeScore = wdRange > 0
@@ -156,18 +156,19 @@ function computeMatchScore(program, intake, pd, globalStats, memberSharedData, o
 }
 
 export function getTopMatchesWithScores(intake, n = 2, memberSharedData = null, options = {}) {
-  const allPd = PROGRAMS.map(p => metricForProgram(p, 'All', memberSharedData))
+  const programs = options.programs || PROGRAMS
+  const allPd = programs.map(p => metricForProgram(p, 'All', memberSharedData))
 
   // Global baselines for relative availability scoring
   const allWaitlistDepths = allPd.map(pd => pd?.waitlistDepth ?? 0)
-  const allAvgWaitDays = PROGRAMS.map(p => p.avgWaitDays ?? 7)
+  const allAvgWaitDays = programs.map(p => p.avgWaitDays ?? 7)
   const globalStats = {
     maxWaitlistDepth: Math.max(...allWaitlistDepths, 1),
     minAvgWaitDays:   Math.min(...allAvgWaitDays),
     maxAvgWaitDays:   Math.max(...allAvgWaitDays),
   }
 
-  return PROGRAMS
+  return programs
     .map((p, i) => ({ program: p, ...computeMatchScore(p, intake, allPd[i], globalStats, memberSharedData, options) }))
     .filter(m => options.ignoreSupportTypes || m.matched > 0)
     .sort((a, b) => b.matchPercent - a.matchPercent)
@@ -202,6 +203,24 @@ const URGENCY_META = {
 
 const URGENCY_ORDER = { crisis: 0, high: 1, medium: 2, low: 3 }
 
+const STATUS_META = {
+  queued:    { label: 'Queued',    cls: 'bg-slate-100 text-slate-700 border-slate-200' },
+  routed:    { label: 'Routed',    cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  accepted:  { label: 'Accepted',  cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+  contacted: { label: 'Contacted', cls: 'bg-violet-50 text-violet-700 border-violet-200' },
+  waitlisted:{ label: 'Waitlisted',cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+  declined:  { label: 'Declined',  cls: 'bg-red-50 text-red-700 border-red-200' },
+  closed:    { label: 'Closed',    cls: 'bg-slate-100 text-slate-500 border-slate-200' },
+}
+
+const QUICK_FILTERS = [
+  { id: 'urgent', label: 'Crisis/urgent' },
+  { id: 'stale', label: 'Over 7 days' },
+  { id: 'followUpDue', label: 'Follow-up due' },
+  { id: 'unrouted', label: 'No route yet' },
+  { id: 'active', label: 'Active routed' },
+]
+
 // In the provider portal, abbreviate the long CALD label for readability.
 // The public-facing intake form still uses the full expression.
 const BADGE_OVERRIDES = {
@@ -210,7 +229,7 @@ const BADGE_OVERRIDES = {
 
 const badgeLabel = label => BADGE_OVERRIDES[label] ?? label
 
-// ─── Filter bar ────────────────────────────────────────────────────────────
+// Filter bar
 
 function FilterBar({ openPanel, togglePanel, selections, toggleSelection, showRouted, onToggleShowRouted }) {
   const count = key => selections[key].length
@@ -302,9 +321,9 @@ function FilterBar({ openPanel, togglePanel, selections, toggleSelection, showRo
   )
 }
 
-// ─── Main component ─────────────────────────────────────────────────────────
+// Main component
 
-// ─── Toast ──────────────────────────────────────────────────────────────────
+// Toast
 
 function Toast({ message, onDismiss }) {
   useEffect(() => {
@@ -323,12 +342,14 @@ function Toast({ message, onDismiss }) {
   )
 }
 
-// ─── Main component ─────────────────────────────────────────────────────────
+// Main component
 
 export default function SharedIntake() {
-  const { intakeQueue, memberSharedData } = useData()
+  const { intakeQueue, memberSharedData, providerPrograms } = useData()
   const [openPanel, setOpenPanel] = useState(null)
   const [selections, setSelections] = useState(FILTER_SELECTIONS)
+  const [query, setQuery] = useState('')
+  const [quickFilters, setQuickFilters] = useState([])
   const [activeIntake, setActiveIntake] = useState(null)
   const [showRouted, setShowRouted] = useState(false)
   const [toast, setToast] = useState(null) // string message or null
@@ -353,7 +374,7 @@ export default function SharedIntake() {
     setActiveIntake(null)
     setToast(Array.isArray(program)
       ? `${program.length} programs added to care plan`
-      : `${program.name} · ${program.orgName}`)
+      : `${program.name} - ${program.orgName}`)
   }, [])
 
   const dismissToast = useCallback(() => setToast(null), [])
@@ -374,14 +395,48 @@ export default function SharedIntake() {
           ? Math.floor((new Date(intake.routedAt) - new Date(intake.submittedAt)) / 86_400_000)
           : null,
         dateLabel: formatDate(intake.submittedAt),
-        matches: getTopMatchesWithScores(intake, 2, memberSharedData),
+        matches: getTopMatchesWithScores(intake, 2, memberSharedData, { programs: providerPrograms }),
       })),
-  [intakeQueue, memberSharedData])
+  [intakeQueue, memberSharedData, providerPrograms])
 
   const rows = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
     return allRows.filter(row => {
-      // Hide routed entries unless showRouted is active
-      if (!showRouted && row.status === 'routed') return false
+      // Hide non-queued workflow entries unless show routed/active records is enabled.
+      if (!showRouted && row.status !== 'queued') return false
+
+      if (q) {
+        const searchable = [
+          row.id,
+          row.suburb,
+          row.gender,
+          row.urgency,
+          row.status,
+          row.referralOwner,
+          row.routingNote,
+          row.declineReason,
+          row.routedOrgName,
+          row.routedProgramName,
+          ...(row.seekerGroups || []),
+          ...(row.supportTypes || []),
+          ...(row.accessModes || []),
+          ...(row.routedPrograms || []).flatMap(route => [route.orgName, route.programName, route.supportType]),
+        ].filter(Boolean).join(' ').toLowerCase()
+        if (!searchable.includes(q)) return false
+      }
+
+      if (quickFilters.includes('urgent') && !['crisis', 'high'].includes(row.urgency)) return false
+      if (quickFilters.includes('stale') && row.days <= 7) return false
+      if (quickFilters.includes('followUpDue')) {
+        if (!row.followUpDue) return false
+        const due = new Date(row.followUpDue)
+        due.setHours(0, 0, 0, 0)
+        if (due > today) return false
+      }
+      if (quickFilters.includes('unrouted') && row.status !== 'queued') return false
+      if (quickFilters.includes('active') && !['routed', 'accepted', 'contacted', 'waitlisted'].includes(row.status)) return false
 
       if (selections.targetGroup.length) {
         const mapped = row.seekerGroups.map(g => TARGET_MAP[g] || g)
@@ -408,10 +463,11 @@ export default function SharedIntake() {
 
       return true
     })
-  }, [allRows, selections, showRouted])
+  }, [allRows, selections, showRouted, query, quickFilters])
 
-  const totalFilters = Object.values(selections).flat().length
-  const colCount = showRouted ? 10 : 9
+  const totalFilters = Object.values(selections).flat().length + quickFilters.length + (query.trim() ? 1 : 0)
+  const colCount = showRouted ? 11 : 10
+  const toggleQuickFilter = id => setQuickFilters(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id])
 
   return (
     <div>
@@ -419,8 +475,46 @@ export default function SharedIntake() {
         <h2 className="text-lg font-bold text-slate-900">Shared Intake queue</h2>
         <span className="text-sm text-slate-400">
           {rows.length} of {allRows.length} records
-          {totalFilters > 0 && ` · ${totalFilters} filter${totalFilters > 1 ? 's' : ''} active`}
+          {totalFilters > 0 && ` - ${totalFilters} filter${totalFilters > 1 ? 's' : ''} active`}
         </span>
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm mb-4 p-4 space-y-3">
+        <div className="relative">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search suburb, support type, status, route, notes, or program..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_FILTERS.map(filter => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => toggleQuickFilter(filter.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                quickFilters.includes(filter.id)
+                  ? 'bg-brand-50 text-brand-700 border-brand-300'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+          {(quickFilters.length || query.trim()) ? (
+            <button
+              type="button"
+              onClick={() => { setQuickFilters([]); setQuery('') }}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors"
+            >
+              Clear search
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <FilterBar
@@ -434,7 +528,7 @@ export default function SharedIntake() {
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full w-max text-sm border-collapse" style={{ minWidth: showRouted ? '1540px' : '1300px' }}>
+          <table className="min-w-full w-max text-sm border-collapse" style={{ minWidth: showRouted ? '1660px' : '1420px' }}>
             <colgroup>
               <col className="w-[70px]" />
               <col className="w-[120px]" />
@@ -442,6 +536,7 @@ export default function SharedIntake() {
               <col className="w-[220px]" />
               <col className="w-[260px]" />
               <col className="w-[150px]" />
+              <col className="w-[140px]" />
               <col className="w-[125px]" />
               <col className="w-[95px]" />
               <col />
@@ -452,7 +547,7 @@ export default function SharedIntake() {
                 {[
                   'Age', 'Gender', 'Suburb',
                   'Describes', 'Seeking support for',
-                  'Urgency', 'Submitted', 'In queue',
+                  'Urgency', 'Status', 'Submitted', 'In queue',
                   'Top service matches',
                   ...(showRouted ? ['Routed To'] : []),
                 ].map(h => (
@@ -474,13 +569,14 @@ export default function SharedIntake() {
                 </tr>
               ) : rows.map(row => {
                 const u = URGENCY_META[row.urgency]
-                const isRouted = row.status === 'routed'
-                const displayDays = isRouted ? (row.frozenDays ?? row.days) : row.days
+                const status = STATUS_META[row.status] || STATUS_META.queued
+                const isActiveWorkflow = row.status !== 'queued'
+                const displayDays = isActiveWorkflow ? (row.frozenDays ?? row.days) : row.days
 
                 return (
                   <tr
                     key={row.id}
-                    className={`transition-colors cursor-pointer ${isRouted ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'hover:bg-brand-50'}`}
+                    className={`transition-colors cursor-pointer ${isActiveWorkflow ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'hover:bg-brand-50'}`}
                     onClick={() => setActiveIntake(row)}
                     title="Click to open intake detail"
                   >
@@ -513,10 +609,18 @@ export default function SharedIntake() {
                         <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${u.cls}`}>
                           {u.label}
                         </span>
-                        {isRouted && (
-                          <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                            Routed
-                          </span>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="space-y-1">
+                        <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full border font-semibold ${status.cls}`}>
+                          {status.label}
+                        </span>
+                        {row.followUpDue && (
+                          <p className="text-[10px] text-slate-400">
+                            Due {formatDate(row.followUpDue)}
+                          </p>
                         )}
                       </div>
                     </td>
@@ -524,7 +628,7 @@ export default function SharedIntake() {
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.dateLabel}</td>
 
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {isRouted ? (
+                      {isActiveWorkflow ? (
                         <span className="font-semibold text-slate-900">{displayDays}d</span>
                       ) : (
                         <span className={`font-semibold ${displayDays >= 7 ? 'text-red-600' : displayDays >= 3 ? 'text-amber-600' : 'text-slate-700'}`}>
@@ -550,11 +654,11 @@ export default function SharedIntake() {
                                 <p className="text-xs font-medium text-slate-800 leading-snug">{m.program.name}</p>
                                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                   <span className={`text-[11px] font-bold ${pctCls}`}>{m.matchPercent}%</span>
-                                  <span className="text-slate-300 text-[10px]">·</span>
+                                  <span className="text-slate-300 text-[10px]">-</span>
                                   <span className={`text-[10px] font-semibold ${wlCls}`}>
                                     {m.waitlistDepth === 0 ? 'No waitlist' : `WL: ${m.waitlistDepth}`}
                                   </span>
-                                  <span className="text-slate-300 text-[10px]">·</span>
+                                  <span className="text-slate-300 text-[10px]">-</span>
                                   <span className="text-[10px] text-slate-400">{m.program.orgName}</span>
                                 </div>
                               </div>
@@ -583,13 +687,13 @@ export default function SharedIntake() {
                                   {'Routed on: '}
                                   {route.routedAt
                                     ? new Date(route.routedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
-                                    : '—'}
+                                    : '-'}
                                 </p>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-300 text-xs">—</span>
+                          <span className="text-slate-300 text-xs">-</span>
                         )}
                       </td>
                     )}

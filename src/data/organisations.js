@@ -64,6 +64,6 @@ export const ORGANISATIONS = [
   { id: 'ORG062', name: 'Red Nose', url: 'https://rednose.org.au/grief-and-loss-support/overview/' },
   { id: 'ORG063', name: 'The Benevolent Society', url: 'https://www.benevolent.org.au/services-and-programs/youth-and-mental-health-support/counselling' },
   { id: 'ORG064', name: 'UCA Canberra Region Presbytery', url: 'https://www.acnc.gov.au/charity/charities/568da90a-39af-e811-a960-000d3ad24282/documents/b4cdbbff-864d-ec11-8f8e-000d3ad017a9' },
-  { id: 'ORG065', name: 'Australian Red Cross – ACT/SE NSW', url: 'https://www.redcross.org.au/' },
+  { id: 'ORG065', name: 'Australian Red Cross - ACT/SE NSW', url: 'https://www.redcross.org.au/' },
   { id: 'ORG066', name: "Health Care Consumers' Association", url: 'https://www.hcca.org.au/publication/take-action-mental-health-complaints-and-feedback-in-the-act/' },
 ]

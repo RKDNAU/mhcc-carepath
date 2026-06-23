@@ -18,6 +18,9 @@ const SERVICE_LINKS = SERVICE_OVERVIEWS.map(({ slug, title }) => ({
 const RESOURCE_LINKS = [
   { label: 'Self-Help Guides', nav: 'resource:self-help' },
   { label: 'Crisis Helplines', nav: 'resource:crisis-helplines' },
+  { label: 'Support Pathways', nav: 'resource:pathways' },
+  { label: 'For Carers And Family', nav: 'resource:carers-family' },
+  { label: 'How Matching Works', nav: 'resource:matching' },
   { label: 'FAQ', nav: 'resource:faq' },
 ]
 
@@ -135,7 +138,7 @@ export default function Footer({ onNavigate, onPrivacyClick, onTermsClick }) {
         </div>
 
         <div className="border-t border-slate-800 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-          <p>© 2026 Mental Health Community Coalition of the ACT. All rights reserved.</p>
+          <p>(c) 2026 Mental Health Community Coalition of the ACT. All rights reserved.</p>
           <p>
             Built for our community, with{' '}
             <Heart size={11} className="inline text-highlight" fill="currentColor" /> in Canberra, by RKDN.

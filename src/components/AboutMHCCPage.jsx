@@ -4,7 +4,7 @@ import PageOverlay from './PageOverlay'
 const FOCUS_AREAS = [
   {
     title: 'Loneliness & Social Isolation',
-    body: 'More than one in four Canberrans report feeling lonely often. MHCC ACT advocates for systemic approaches — improving community design, work-life balance, and reducing technology-driven isolation — to address the mental health impacts of social disconnection.',
+    body: 'More than one in four Canberrans report feeling lonely often. MHCC ACT advocates for systemic approaches - improving community design, work-life balance, and reducing technology-driven isolation - to address the mental health impacts of social disconnection.',
   },
   {
     title: 'Perinatal Mental Health',
@@ -12,7 +12,7 @@ const FOCUS_AREAS = [
   },
   {
     title: 'Justice and Mental Health',
-    body: 'MHCC ACT supports health-centred approaches in the justice system, including drug decriminalization and raising the age of criminal responsibility — advocating for humane, evidence-based service delivery at the intersection of mental health and justice.',
+    body: 'MHCC ACT supports health-centred approaches in the justice system, including drug decriminalization and raising the age of criminal responsibility - advocating for humane, evidence-based service delivery at the intersection of mental health and justice.',
   },
   {
     title: 'Climate Change and Mental Wellbeing',
@@ -20,12 +20,12 @@ const FOCUS_AREAS = [
   },
   {
     title: 'Alcohol, Tobacco & Other Drugs',
-    body: 'Through the ATOD-Mental Health Alliance — co-established with ATODA — MHCC ACT addresses fragmentation between alcohol and other drug services and mental health services, supporting integrated, coordinated responses for people with co-occurring needs.',
+    body: 'Through the ATOD-Mental Health Alliance - co-established with ATODA - MHCC ACT addresses fragmentation between alcohol and other drug services and mental health services, supporting integrated, coordinated responses for people with co-occurring needs.',
   },
 ]
 
 const ACCREDITATIONS = [
-  'Australian Service Excellence Standards (ASES) – Certificate Level',
+  'Australian Service Excellence Standards (ASES) - Certificate Level',
   'Quality Innovation Performance (QIP) accredited',
   'Registered charity with the ACNC',
   'ACT Government funded',
@@ -72,7 +72,7 @@ export default function AboutMHCCPage({ onClose }) {
           </blockquote>
           <p className="text-brand-700 text-sm mt-4 leading-relaxed">
             MHCC ACT advocates for a mental health system built on prevention, early intervention, and
-            recovery — grounded in community support rather than acute hospital settings. We work to
+            recovery - grounded in community support rather than acute hospital settings. We work to
             ensure organisations delivering mental health services are adequately funded, accessible,
             and easy to navigate for every Canberran.
           </p>
@@ -86,7 +86,7 @@ export default function AboutMHCCPage({ onClose }) {
               { title: 'Advocacy & Policy', body: 'We represent the community-managed mental health sector in government and advisory forums, influencing policy through evidence and lived experience.' },
               { title: 'Workforce Development', body: 'We deliver training, resources, practitioner forums, and educational materials that build a skilled, resilient mental health workforce across the ACT.' },
               { title: 'Sector Coordination', body: 'We facilitate collaboration across our 56 member organisations, reducing fragmentation and improving integrated responses for people with complex needs.' },
-              { title: 'Community Awareness', body: 'Each year, MHCC ACT coordinates Mental Health Week ACT — an annual celebration bringing together the sector, lived experience advocates, and the broader community.' },
+              { title: 'Community Awareness', body: 'Each year, MHCC ACT coordinates Mental Health Week ACT - an annual celebration bringing together the sector, lived experience advocates, and the broader community.' },
             ].map(({ title, body }) => (
               <div key={title} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
                 <h3 className="font-bold text-slate-900 mb-2">{title}</h3>
@@ -104,7 +104,7 @@ export default function AboutMHCCPage({ onClose }) {
               <details key={title} className="bg-white rounded-2xl border border-slate-100 shadow-sm group">
                 <summary className="px-5 py-4 cursor-pointer font-semibold text-slate-900 hover:text-brand-700 transition-colors list-none flex items-center justify-between">
                   {title}
-                  <span className="text-slate-400 group-open:rotate-180 transition-transform duration-200 text-lg leading-none">▾</span>
+                  <span className="text-slate-400 group-open:rotate-180 transition-transform duration-200 text-lg leading-none">v</span>
                 </summary>
                 <p className="px-5 pb-4 text-sm text-slate-500 leading-relaxed border-t border-slate-100 pt-3">{body}</p>
               </details>

@@ -66,8 +66,8 @@
     "orgId": "ORG015",
     "orgName": "Capital Health Network (CHN)",
     "name": "Well Connect ACT Psychosocial Support Services",
-    "shortName": "Well Connect ACT (16–64)",
-    "description": "A non-clinical psychosocial support program for people aged 16–64 with severe mental illness and associated psychosocial dysfunction who are not eligible for or supported through the NDIS.",
+    "shortName": "Well Connect ACT (16-64)",
+    "description": "A non-clinical psychosocial support program for people aged 16-64 with severe mental illness and associated psychosocial dysfunction who are not eligible for or supported through the NDIS.",
     "functions": [
       "Holding / continuity"
     ],
@@ -85,7 +85,7 @@
     "orgId": "ORG015",
     "orgName": "Capital Health Network (CHN)",
     "name": "Alongside (Commonwealth Psychosocial Support Services)",
-    "shortName": "Directions Health – Alongside",
+    "shortName": "Directions Health - Alongside",
     "description": "Provides psychosocial support for people with severe mental illness who have comorbid issues (including substance use and/or physical health issues) and who do not have access to the NDIS or other capacity building supports.",
     "functions": [
       "Holding / continuity"
@@ -226,8 +226,8 @@
     "id": "PRG0222",
     "orgId": "ORG029",
     "orgName": "Marymead CatholicCare Canberra & Goulburn",
-    "name": "Next Step -Cool Little Kids (3–6) Anxiety Group",
-    "description": "A 6-session CBT-based group program (via Teams) for parents of shy or anxious children aged 3–6, teaching practical skills to understand and manage child anxiety.",
+    "name": "Next Step -Cool Little Kids (3-6) Anxiety Group",
+    "description": "A 6-session CBT-based group program (via Teams) for parents of shy or anxious children aged 3-6, teaching practical skills to understand and manage child anxiety.",
     "functions": [
       "Early recognition"
     ],
@@ -243,8 +243,8 @@
     "id": "PRG0223",
     "orgId": "ORG029",
     "orgName": "Marymead CatholicCare Canberra & Goulburn",
-    "name": "Next Step -Cool Kids (7–12) Anxiety Group",
-    "description": "A 9-session CBT-based group program during school terms for children aged 7–12 and their carers, providing strategies to manage anxiety and worry.",
+    "name": "Next Step -Cool Kids (7-12) Anxiety Group",
+    "description": "A 9-session CBT-based group program during school terms for children aged 7-12 and their carers, providing strategies to manage anxiety and worry.",
     "functions": [
       "Early recognition"
     ],
@@ -663,7 +663,7 @@
     "orgId": "ORG046",
     "orgName": "Toora Women",
     "name": "Mental Health & Wellbeing Group Programs (COS-P, Healing Trauma, DBT)",
-    "description": "Structured group programs (6–8 weeks) including Circle of Security Parenting, Healing Trauma Group, and Dialectical Behaviour Therapy group to build coping skills, support parenting confidence, and strengthen relationships after trauma and distress.",
+    "description": "Structured group programs (6-8 weeks) including Circle of Security Parenting, Healing Trauma Group, and Dialectical Behaviour Therapy group to build coping skills, support parenting confidence, and strengthen relationships after trauma and distress.",
     "functions": [
       "Belonging & participation",
       "Early recognition"
@@ -882,7 +882,7 @@
     "id": "PRG0417",
     "orgId": "ORG060",
     "orgName": "Mental Health Community Coalition ACT",
-    "name": "ACT Alcohol, Tobacco and Other Drugs – Mental Health Alliance",
+    "name": "ACT Alcohol, Tobacco and Other Drugs - Mental Health Alliance",
     "shortName": "ATOD-MH Alliance",
     "description": "A cross-sector alliance established by MHCC ACT and ATODA to address fragmentation and gaps between alcohol and other drug services and mental health services in the ACT, working through working groups, a community of practice, and professional development.",
     "functions": [
@@ -980,7 +980,7 @@
   {
     "id": "PRG0428",
     "orgId": "ORG065",
-    "orgName": "Australian Red Cross – ACT/SE NSW",
+    "orgName": "Australian Red Cross - ACT/SE NSW",
     "name": "MATES (befriending program)",
     "description": "A befriending program for people with a diagnosed mental illness who are ready to reconnect to their community. Volunteers support participants to work toward their goals through local social activities and community outings.",
     "functions": [

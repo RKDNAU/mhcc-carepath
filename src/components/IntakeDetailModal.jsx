@@ -1,6 +1,5 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { X, Heart, Plus } from 'lucide-react'
-import { PROGRAMS } from '../data/programs'
 import { getTopMatchesWithScores } from './SharedIntake'
 import { useData } from '../context/DataContext'
 import { COLORS } from '../constants/theme'
@@ -125,7 +124,15 @@ function MatchFitnessTooltip({ match, intake, visible }) {
 }
 
 export default function IntakeDetailModal({ intake, onClose, onRouted }) {
-  const { routeIntake, routeCarePlan, memberSharedData } = useData()
+  const {
+    routeIntake,
+    routeCarePlan,
+    updateIntakeWorkflow,
+    getIntakeEvents,
+    addIntakeNote,
+    memberSharedData,
+    providerPrograms,
+  } = useData()
   const modalBodyRef = useRef(null)
   const [selectedProgramId, setSelectedProgramId] = useState('')
   const [routeMode, setRouteMode] = useState('single')
@@ -136,8 +143,28 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
   const [hoveredMatch, setHoveredMatch] = useState(null)
   const [isRouting, setIsRouting] = useState(false)
   const [routeError, setRouteError] = useState(null)
+  const [events, setEvents] = useState([])
+  const [eventsLoading, setEventsLoading] = useState(true)
+  const [noteBody, setNoteBody] = useState('')
+  const [workflow, setWorkflow] = useState({
+    status: intake.status || 'queued',
+    referralOwner: intake.referralOwner || '',
+    followUpDue: intake.followUpDue || '',
+    routingNote: intake.routingNote || '',
+    declineReason: intake.declineReason || '',
+  })
 
-  const matches = useMemo(() => getTopMatchesWithScores(intake, 2, memberSharedData), [intake, memberSharedData])
+  useEffect(() => {
+    let cancelled = false
+    setEventsLoading(true)
+    getIntakeEvents(intake.id)
+      .then(rows => { if (!cancelled) setEvents(rows) })
+      .catch(() => { if (!cancelled) setEvents([]) })
+      .finally(() => { if (!cancelled) setEventsLoading(false) })
+    return () => { cancelled = true }
+  }, [getIntakeEvents, intake.id])
+
+  const matches = useMemo(() => getTopMatchesWithScores(intake, 2, memberSharedData, { programs: providerPrograms }), [intake, memberSharedData, providerPrograms])
   const supportTypes = intake.supportTypes?.length ? intake.supportTypes : ['General support']
   const carePlanTabs = useMemo(() => [
     ...supportTypes.map((type, index) => ({
@@ -156,24 +183,24 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
         { ...intake, supportTypes: tab.ignoreSupportTypes || tab.supportType === 'General support' ? [] : [tab.supportType] },
         2,
         memberSharedData,
-        { ignoreSupportTypes: tab.ignoreSupportTypes }
+        { ignoreSupportTypes: tab.ignoreSupportTypes, programs: providerPrograms }
       ),
     ])
     return Object.fromEntries(entries)
-  }, [intake, memberSharedData, carePlanTabs])
+  }, [intake, memberSharedData, carePlanTabs, providerPrograms])
 
   const programsByOrg = useMemo(() => {
     const groups = {}
-    PROGRAMS.forEach(p => { if (!groups[p.orgName]) groups[p.orgName] = []; groups[p.orgName].push(p) })
+    providerPrograms.forEach(p => { if (!groups[p.orgName]) groups[p.orgName] = []; groups[p.orgName].push(p) })
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-  }, [])
+  }, [providerPrograms])
 
   const activeMultiProgramId = multiSelections[activeTab?.id] || ''
-  const activeMultiProgram = PROGRAMS.find(p => p.id === activeMultiProgramId)
+  const activeMultiProgram = providerPrograms.find(p => p.id === activeMultiProgramId)
   const activeProgramAlreadyAdded = !!activeTab && carePlan.some(item =>
     item.program.id === activeMultiProgramId && item.supportTypes.includes(activeTab.supportType)
   )
-  const selectedProg = PROGRAMS.find(p => p.id === selectedProgramId)
+  const selectedProg = providerPrograms.find(p => p.id === selectedProgramId)
 
   const handleRoute = async () => {
     if (isRouting) return
@@ -181,17 +208,49 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
     if (routeMode === 'multi' && carePlan.length === 0) return
     setRouteError(null)
     setIsRouting(true)
+    const workflowPayload = {
+      referralOwner: workflow.referralOwner,
+      followUpDue: workflow.followUpDue,
+      routingNote: workflow.routingNote,
+      declineReason: workflow.declineReason,
+    }
     try {
       if (routeMode === 'multi') {
-        await routeCarePlan(intake.id, carePlan)
+        await routeCarePlan(intake.id, carePlan, workflowPayload)
         onRouted?.(carePlan.map(item => item.program))
       } else {
-        await routeIntake(intake.id, selectedProg)
+        await routeIntake(intake.id, selectedProg, workflowPayload)
         onRouted?.(selectedProg)
       }
     } catch (err) {
-      setRouteError('Routing failed — please try again.')
+      setRouteError('Routing failed - please try again.')
       setIsRouting(false)
+    }
+  }
+
+  const handleSaveWorkflow = async () => {
+    if (isRouting) return
+    setRouteError(null)
+    setIsRouting(true)
+    try {
+      await updateIntakeWorkflow(intake.id, workflow)
+      const nextEvents = await getIntakeEvents(intake.id)
+      setEvents(nextEvents)
+      setIsRouting(false)
+    } catch (err) {
+      setRouteError('Workflow update failed - please try again.')
+      setIsRouting(false)
+    }
+  }
+
+  const handleAddNote = async () => {
+    if (!noteBody.trim()) return
+    try {
+      const event = await addIntakeNote(intake.id, noteBody.trim(), workflow.referralOwner || 'Provider user')
+      setEvents(prev => [...prev, event])
+      setNoteBody('')
+    } catch (err) {
+      setRouteError('Note could not be saved - please try again.')
     }
   }
 
@@ -302,6 +361,71 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
 
           <div className="border-t border-slate-100" />
 
+          <section className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Workflow</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Status</label>
+                <select
+                  value={workflow.status}
+                  onChange={e => setWorkflow(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  {['queued', 'routed', 'accepted', 'contacted', 'waitlisted', 'declined', 'closed'].map(status => (
+                    <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Referral owner</label>
+                <input
+                  value={workflow.referralOwner}
+                  onChange={e => setWorkflow(prev => ({ ...prev, referralOwner: e.target.value }))}
+                  placeholder="Team member"
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Follow-up due</label>
+                <input
+                  type="date"
+                  value={workflow.followUpDue}
+                  onChange={e => setWorkflow(prev => ({ ...prev, followUpDue: e.target.value }))}
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Decline reason</label>
+                <input
+                  value={workflow.declineReason}
+                  onChange={e => setWorkflow(prev => ({ ...prev, declineReason: e.target.value }))}
+                  placeholder="Only if declined"
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Routing note</label>
+              <textarea
+                value={workflow.routingNote}
+                onChange={e => setWorkflow(prev => ({ ...prev, routingNote: e.target.value }))}
+                rows={2}
+                placeholder="Context for the referral or follow-up"
+                className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveWorkflow}
+              disabled={isRouting}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-brand-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+            >
+              Save workflow details
+            </button>
+          </section>
+
+          <div className="border-t border-slate-100" />
+
           {/* Top service matches */}
           <section>
             <div className="flex items-center justify-between gap-3 mb-3">
@@ -379,7 +503,7 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
                           <span className={`font-bold ${m.demographicFit >= 75 ? 'text-emerald-700' : m.demographicFit >= 60 ? 'text-amber-700' : 'text-slate-600'}`}>
                             {m.demographicFit}%
                           </span>
-                          {' '}demographic fit · {m.ageGroup} age group
+                          {' '}demographic fit - {m.ageGroup} age group
                         </p>
                       )}
                       <MatchFitnessTooltip
@@ -520,6 +644,45 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
 
           <div className="border-t border-slate-100" />
 
+          <section className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Timeline and notes</h3>
+            <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+              {eventsLoading ? (
+                <p className="text-xs text-slate-400">Loading timeline...</p>
+              ) : events.length === 0 ? (
+                <p className="text-xs text-slate-400">No timeline events yet.</p>
+              ) : events.map(event => (
+                <div key={event.id} className="bg-white border border-slate-100 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{event.eventType}</p>
+                    <p className="text-[10px] text-slate-400">{formatDate(event.createdAt)}</p>
+                  </div>
+                  {event.body && <p className="text-xs text-slate-700 mt-1 leading-relaxed">{event.body}</p>}
+                  {event.createdBy && <p className="text-[10px] text-slate-400 mt-1">By {event.createdBy}</p>}
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <textarea
+                value={noteBody}
+                onChange={e => setNoteBody(e.target.value)}
+                rows={2}
+                placeholder="Add a provider note"
+                className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddNote}
+                disabled={!noteBody.trim()}
+                className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 text-white font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Add note
+              </button>
+            </div>
+          </section>
+
+          <div className="border-t border-slate-100" />
+
           {/* Route referral */}
           <section>
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Route referral</h3>
@@ -536,7 +699,7 @@ export default function IntakeDetailModal({ intake, onClose, onRouted }) {
                 disabled={isRouting}
                 className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
               >
-                <option value="">Select a program…</option>
+                <option value="">Select a program...</option>
                 {programsByOrg.map(([orgName, progs]) => (
                   <optgroup key={orgName} label={orgName}>
                     {progs.map(p => (

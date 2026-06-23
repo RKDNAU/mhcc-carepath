@@ -34,6 +34,9 @@ const NAV_ITEMS = [
     items: [
       { label: 'Self-Help Guides', desc: 'Sourced wellbeing guides and tools', nav: 'resource:self-help' },
       { label: 'Crisis Helplines', desc: 'Immediate phone and online support', nav: 'resource:crisis-helplines' },
+      { label: 'Support Pathways', desc: 'Inclusive pathway links', nav: 'resource:pathways' },
+      { label: 'For Carers And Family', desc: 'Support for carers and kin', nav: 'resource:carers-family' },
+      { label: 'How Matching Works', desc: 'How CarePath suggests services', nav: 'resource:matching' },
       { label: 'FAQ', desc: 'Sourced answers to common questions', nav: 'resource:faq' },
     ],
   },
